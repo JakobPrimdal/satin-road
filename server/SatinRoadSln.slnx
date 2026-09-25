@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/Infra/">
+    <Project Path="Infra/Infrastructure.csproj" />
+  </Folder>
+  <Project Path="Api/Api.csproj" />
+  <Project Path="Service/Service.csproj" />
+</Solution>
