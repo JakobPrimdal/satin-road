@@ -1,10 +1,28 @@
+using Infrastructure;
+using LinqToDB;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+//  database settings
+var options = new DataOptions<MyDataBaseConnection>(
+    new DataOptions().UseSQLite("Data Source=db.db"));
+
+builder.Services.AddScoped<MyDataBaseConnection>(_ =>
+    new MyDataBaseConnection(options));
+
+
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<MyDataBaseConnection>();
+
+
+    db.CreateTable<User>(tableOptions: TableOptions.CreateIfNotExists);
+   
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
