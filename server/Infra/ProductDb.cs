@@ -1,10 +1,11 @@
 using Infrastructure.Entities;
+using Infrastructure.Interfaces;
 using LinqToDB;
 using LinqToDB.Data;
 
 namespace Infrastructure;
 
-public class ProductDb(DataOptions<ProductDb> dataOptions) : DataConnection(dataOptions.Options)
+public class ProductDb(DataOptions<ProductDb> dataOptions) : DataConnection(dataOptions.Options), IProductDb
 {
     public ITable<Product> Products()
     {
