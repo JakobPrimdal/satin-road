@@ -2,7 +2,7 @@ using System.Linq.Expressions;
 using LinqToDB;
 using LinqToDB.Mapping;
 
-namespace Infrastructure;
+namespace Infrastructure.Entities;
 
 [Table("ProductImage")]
 public class ProductImage

@@ -1,3 +1,4 @@
+using Infrastructure.Entities;
 using LinqToDB;
 using LinqToDB.Data;
 
