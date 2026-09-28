@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -23,4 +24,8 @@ public class AuthController(AuthService authService) : ControllerBase
         var userId = HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub)!;
         return await authService.GetUser(userId);
     }
+    
+    [Authorize(Roles = Roles.Admin)]
+    [HttpGet(nameof(AdminCheck))]
+    public string AdminCheck() => "You are an admin";
 }

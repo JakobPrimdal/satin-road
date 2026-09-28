@@ -64,10 +64,14 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<MyDbConnection>();
-
-
     db.CreateTable<User>(tableOptions: TableOptions.CreateIfNotExists);
-   
+
+    var adminUsername = builder.Configuration["Admin:Username"] ?? "admin";
+    var adminPassword = builder.Configuration["Admin:Password"]
+                        ?? throw new InvalidOperationException("Admin:Password is not configured");
+    var auth = scope.ServiceProvider.GetRequiredService<AuthService>();
+    await auth.SeedAdmin(adminUsername, adminPassword);
+
 }
 
 app.UseExceptionHandler();
