@@ -11,5 +11,8 @@ public class ProductDb(DataOptions<ProductDb> dataOptions) : DataConnection(data
         return this.GetTable<Product>();
     }
     
-    
+    public ITable<ProductImage> ProductImages()
+    {
+        return this.GetTable<ProductImage>();
+    }
 }
