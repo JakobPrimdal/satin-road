@@ -10,7 +10,7 @@ public class Product
     [PrimaryKey] [Identity] public int Id { get; set; }
     [Column] [NotNull] public string Title { get; set; } = "";
     [Column] [NotNull] public string Description { get; set; } = "";
-    [Column] [NotNull] public double Price { get; set; }
+    [Column] [NotNull] public decimal Price { get; set; }
     [Column] [NotNull] public int Stock { get; set; }
     [Column] [NotNull] public DateTime CreatedAtUtc { get; set; }
     [Column] [NotNull] public DateTime UpdatedAtUtc { get; set; }
