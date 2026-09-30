@@ -8,10 +8,14 @@ public class MyExceptionHandler : IExceptionHandler
         Exception exception, CancellationToken cancellationToken)
     {
         //  the status code based on the type of exception
-        httpContext.Response.StatusCode = exception is ValidationException
-            ? StatusCodes.Status400BadRequest            // the user sent bad data
-            : StatusCodes.Status500InternalServerError;  // something broke on the server
-
+        httpContext.Response.StatusCode = exception switch
+        {
+            ValidationException => StatusCodes.Status400BadRequest,           // bad data
+            UnauthorizedAccessException => StatusCodes.Status401Unauthorized, // wrong login / seized
+            KeyNotFoundException => StatusCodes.Status404NotFound,            // doesn't exist
+            _ => StatusCodes.Status500InternalServerError                     // bug on our side
+        };
+        
         //  Send the error message as JSON (ProblemDetails)
         await httpContext.Response.WriteAsJsonAsync(
             new ProblemDetails { Title = exception.Message },

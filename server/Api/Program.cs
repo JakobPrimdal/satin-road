@@ -1,5 +1,11 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
 using Infrastructure;
 using LinqToDB;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using NSwag;
+using NSwag.Generation.Processors.Security;
 using Service;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,17 +24,54 @@ builder.Services.AddExceptionHandler<MyExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddCors();
 
-builder.Services.AddOpenApiDocument();
+builder.Services.AddOpenApiDocument(c =>
+{
+    c.AddSecurity("JWT", new OpenApiSecurityScheme
+    {
+        Type = OpenApiSecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT"
+    });
+    c.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("JWT"));
+});
 
+
+// ---------- JWT ----------
+var jwt = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()!;
+builder.Services.AddSingleton(jwt);
+builder.Services.AddSingleton<TokenService>();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(o =>
+    {
+        o.MapInboundClaims = false;   // keep claim names exactly as written in TokenService
+        o.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwt.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwt.Audience,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Secret)),
+            RoleClaimType = "role",
+            NameClaimType = JwtRegisteredClaimNames.UniqueName
+        };
+    });
+builder.Services.AddAuthorization();
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<MyDbConnection>();
-
-
     db.CreateTable<User>(tableOptions: TableOptions.CreateIfNotExists);
-   
+
+    var adminUsername = builder.Configuration["Admin:Username"] ?? "admin";
+    var adminPassword = builder.Configuration["Admin:Password"]
+                        ?? throw new InvalidOperationException("Admin:Password is not configured");
+    var auth = scope.ServiceProvider.GetRequiredService<AuthService>();
+    await auth.SeedAdmin(adminUsername, adminPassword);
+
 }
 
 app.UseExceptionHandler();
@@ -36,6 +79,9 @@ app.UseCors(config => config
     .AllowAnyHeader()
     .AllowAnyMethod()
     .SetIsOriginAllowed(_ => true));
+
+app.UseAuthentication();  
+app.UseAuthorization(); 
 
 app.UseOpenApi(); 
 app.UseSwaggerUi();
