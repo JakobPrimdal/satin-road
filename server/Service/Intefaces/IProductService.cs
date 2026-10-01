@@ -13,4 +13,10 @@ public interface IProductService
     public ProductResponseDTO? UpdateProduct(int id, ProductRequestDTO dto);
 
     public bool DeleteProduct(int id);
+
+    public List<ProductImageDTO> AddImages(int productId, List<ProductImageDataDTO> files);
+
+    public ProductImageDataDTO? GetImageData(int imageId);
+
+    public bool DeleteImage(int imageId);
 }

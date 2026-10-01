@@ -89,6 +89,60 @@ public class ProductService: IProductService
         return true;
     }
 
+    
+    // Image CRUD
+    
+    public ProductImageDataDTO? GetImageData(int imageId)
+    {
+        var image = db.ProductImages().FirstOrDefault(i => i.Id == imageId);
+        
+        return image is null ? null : new ProductImageDataDTO
+        {
+            Data = image.Image,
+            Extension = image.Extension
+        };
+    }
+    
+    public List<ProductImageDTO> AddImages(int productId, List<ProductImageDataDTO> files)
+    {
+        int nextSortOrder = db.ProductImages().Count(i => i.ProductId == productId);
+        bool hasPrimaryAlready = db.ProductImages().Any(i => i.ProductId == productId && i.IsPrimary);
+
+        var saved = new List<ProductImageDTO>();
+
+        foreach (var file in files)
+        {
+            var image = new ProductImage
+            {
+                ProductId = productId,
+                Extension = file.Extension,
+                Image = file.Data,
+                IsPrimary = !hasPrimaryAlready,
+                SortOrder = nextSortOrder
+            };
+
+            image.Id = db.InsertWithInt32Identity(image);
+            
+            saved.Add(new ProductImageDTO
+            {
+                Id = image.Id,
+                Extension = image.Extension,
+                IsPrimary = image.IsPrimary,
+                SortOrder = image.SortOrder
+            });
+
+            hasPrimaryAlready = true;
+            nextSortOrder++;
+        }
+
+        return saved;
+    }
+
+    public bool DeleteImage(int imageId)
+    {
+        return db.ProductImages().Where(i => i.Id == imageId).Delete() > 0;
+    }
+
     private static ProductResponseDTO ToDto(Product p) => new()
     {
         Id = p.Id,
