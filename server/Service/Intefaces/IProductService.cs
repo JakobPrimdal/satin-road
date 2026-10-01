@@ -8,6 +8,8 @@ public interface IProductService
 
     public ProductResponseDTO? GetProduct(int id);
 
+    public List<ProductResponseDTO> SearchProducts(string search);
+
     public ProductResponseDTO CreateProduct(ProductRequestDTO dto);
 
     public ProductResponseDTO? UpdateProduct(int id, ProductRequestDTO dto);

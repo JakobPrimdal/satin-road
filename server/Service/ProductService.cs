@@ -39,6 +39,19 @@ public class ProductService: IProductService
         return product is null ? null : ToDto(product);
     }
 
+    public List<ProductResponseDTO> SearchProducts(string search)
+    {
+        if (string.IsNullOrWhiteSpace(search))
+            return GetProducts();
+
+        List<Product> matches = db.Products()
+            .LoadWith(p => p.Images)
+            .Where(p => p.Title.Contains(search) || p.Description.Contains(search))
+            .ToList();
+
+        return matches.Select(ToDto).ToList();
+    }
+
     public ProductResponseDTO CreateProduct(ProductRequestDTO dto)
     {
         Product product = new Product()

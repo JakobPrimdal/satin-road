@@ -21,6 +21,12 @@ public class ProductController(ProductService service) : ControllerBase
         return product is null ? NotFound() : Ok(product);
     }
 
+    [HttpGet(nameof(SearchProducts))]
+    public List<ProductResponseDTO> SearchProducts(string search)
+    {
+        return service.SearchProducts(search);
+    }
+
     [HttpPost(nameof(CreateProduct))]
     public ProductResponseDTO CreateProduct([FromForm] ProductRequestDTO dto)
     {
