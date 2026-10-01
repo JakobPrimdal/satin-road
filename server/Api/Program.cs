@@ -1,41 +1,32 @@
+using Infrastructure;
+using Infrastructure.Entities;
+using LinqToDB;
+using Service;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+var connectionString = "Data Source=db.db";
+var options = new DataOptions().UseSQLite(connectionString);
+var dataOptions = new DataOptions<ProductDb>(options);
+builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<ProductDb>(_ => new ProductDb(dataOptions));
+builder.Services.AddOpenApiDocument();
+builder.Services.AddControllers();
+builder.Services.AddCors();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+using (var scope = app.Services.CreateScope())
 {
-    app.MapOpenApi();
+    var db = scope.ServiceProvider.GetRequiredService<ProductDb>();
+    db.CreateTable<Product>(tableOptions: TableOptions.CreateIfNotExists);
+    db.CreateTable<ProductImage>(tableOptions: TableOptions.CreateIfNotExists);
 }
 
-app.UseHttpsRedirection();
+app.UseCors(config => config.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin().SetIsOriginAllowed(_ => true));
+app.UseOpenApi();
+app.UseSwaggerUi();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.MapControllers();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
