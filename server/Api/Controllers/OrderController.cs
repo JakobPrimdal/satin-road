@@ -21,7 +21,7 @@ public class OrderController(OrderService service) : ControllerBase
     }
 
     [HttpPost(nameof(PlaceOrder))]
-    public OrderResponseDTO PlaceOrder([FromForm] OrderRequestDTO dto)
+    public OrderResponseDTO PlaceOrder(OrderRequestDTO dto)
     {
         return service.CreateCustomerOrder(dto);
     }

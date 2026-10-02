@@ -6,7 +6,7 @@ using Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = "Data Source=db.db";
+var connectionString = "Data Source=db.db;Foreign Keys=True";
 var options = new DataOptions().UseSQLite(connectionString);
 
 var productDbOptions = new DataOptions<ProductDb>(options);

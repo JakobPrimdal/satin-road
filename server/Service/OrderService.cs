@@ -36,6 +36,25 @@ public class OrderService : IOrderService
 
     public OrderResponseDTO CreateCustomerOrder(OrderRequestDTO dto)
     {
+        var validatedItems = new List<(Product Product, int Quantity)>();
+
+        foreach (var requestProduct in dto.Products)
+        {
+            var product = productDb.Products()
+                .FirstOrDefault(p => p.Id == requestProduct.Productid);
+
+            if (product is null)
+                throw new ArgumentException("Product with id: " + requestProduct.Productid + " was not found.");
+
+            if (requestProduct.Quantity <= 0)
+                throw new ArgumentException("Quantity must be greater than zero for product with id: " + requestProduct.Productid);
+
+            if (requestProduct.Quantity > product.Stock)
+                throw new ArgumentException("Not enough stock for product with id: " + requestProduct.Productid);
+
+            validatedItems.Add((product, requestProduct.Quantity));
+        }
+
         var order = new CustomerOrder
         {
             CustomerId = dto.CustomerId,
@@ -44,34 +63,21 @@ public class OrderService : IOrderService
 
         order.Id = orderDb.InsertWithInt32Identity(order);
 
-        foreach (var requestProduct in dto.Products)
+        foreach (var (product, quantity) in validatedItems)
         {
-            if (requestProduct.Quantity <= 0)
-                throw new ArgumentException("Product with id: " + requestProduct.Productid + " is out of stock.");
-
-            var product = productDb.Products()
-                .FirstOrDefault(p => p.Id == requestProduct.Productid);
-
-            if (product is null)
-                throw new ArgumentException("Product with id: " + requestProduct.Productid + " was not found.");
-
-            if (requestProduct.Quantity > product.Stock)
-                throw new ArgumentException("Not enough stock for product with id: " + requestProduct.Productid);
-
             var orderProduct = new OrderProduct
             {
                 OrderId = order.Id,
                 ProductId = product.Id,
                 VendorId = product.VendorId,
-                Quantity = requestProduct.Quantity,
+                Quantity = quantity,
                 UnitPriceAtPurchase = product.Price
             };
 
             orderDb.InsertWithInt32Identity(orderProduct);
 
-            product.Stock -= requestProduct.Quantity;
+            product.Stock -= quantity;
             product.UpdatedAtUtc = DateTime.UtcNow;
-
             productDb.Update(product);
         }
 
