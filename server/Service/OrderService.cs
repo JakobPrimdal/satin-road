@@ -20,7 +20,10 @@ public class OrderService : IOrderService
     
     public List<OrderResponseDTO> GetCustomerOrders()
     {
-        var orders = orderDb.CustomerOrders().ToList();
+        var orders = orderDb.CustomerOrders()
+            .LoadWith(o => o.Products)
+            .ThenLoad(op => op.Product)
+            .ToList();
         
         return orders.Select(ToDto).ToList();
     }
