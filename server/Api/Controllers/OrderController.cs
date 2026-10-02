@@ -16,8 +16,7 @@ public class OrderController(OrderService service) : ControllerBase
     [HttpGet(nameof(GetOrder))]
     public ActionResult<OrderResponseDTO> GetOrder(int orderId)
     {
-        var order = service.GetCustomerOrder(orderId);
-        return order is null ? NotFound() : Ok(order);
+        return service.GetCustomerOrder(orderId);
     }
 
     [HttpPost(nameof(PlaceOrder))]

@@ -17,8 +17,7 @@ public class ProductController(ProductService service) : ControllerBase
     [HttpGet(nameof(GetProduct))]
     public ActionResult<ProductResponseDTO> GetProduct(int id)
     {
-        var product = service.GetProduct(id);
-        return product is null ? NotFound() : Ok(product);
+        return service.GetProduct(id);
     }
 
     [HttpGet(nameof(SearchProducts))]
@@ -42,8 +41,8 @@ public class ProductController(ProductService service) : ControllerBase
     [HttpDelete(nameof(DeleteProduct))]
     public IActionResult DeleteProduct(int id)
     {
-        var deleted = service.DeleteProduct(id);
-        return deleted ? NoContent() : NotFound();
+        service.DeleteProduct(id);
+        return NoContent();
     }
     
     
@@ -53,8 +52,6 @@ public class ProductController(ProductService service) : ControllerBase
     public IActionResult GetImage(int imageId)
     {
         var image = service.GetImageData(imageId);
-        if (image is null)
-            return NotFound();
 
         var contentTypeProvider = new FileExtensionContentTypeProvider();
         if (!contentTypeProvider.TryGetContentType("file" + image.Extension, out var contentType))
@@ -86,7 +83,7 @@ public class ProductController(ProductService service) : ControllerBase
     [HttpDelete(nameof(DeleteImage))]
     public IActionResult DeleteImage(int imageId)
     {
-        var deleted = service.DeleteImage(imageId);
-        return deleted ? NoContent() : NotFound();
+        service.DeleteImage(imageId);
+        return NoContent();
     }
 }

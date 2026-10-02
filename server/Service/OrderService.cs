@@ -1,4 +1,5 @@
 using DefaultNamespace;
+using Service.Exceptions;
 using Infrastructure;
 using Infrastructure.Entities;
 using LinqToDB;
@@ -24,18 +25,23 @@ public class OrderService : IOrderService
         return orders.Select(ToDto).ToList();
     }
 
-    public OrderResponseDTO? GetCustomerOrder(int orderId)
+    public OrderResponseDTO GetCustomerOrder(int orderId)
     {
         var customerOrder = orderDb.CustomerOrders()
             .LoadWith(o => o.Products)
             .ThenLoad(op => op.Product)
             .FirstOrDefault(o => o.Id == orderId);
 
-        return customerOrder is null ? null : ToDto(customerOrder);
+        return customerOrder is null ? 
+            throw new NotFoundException("Order with id = " + orderId + " was not found.") 
+            : ToDto(customerOrder);
     }
 
     public OrderResponseDTO CreateCustomerOrder(OrderRequestDTO dto)
     {
+        if (dto.Products is null || dto.Products.Count == 0)
+            throw new BadRequestException("An order must contain at least one product.");
+        
         var validatedItems = new List<(Product Product, int Quantity)>();
 
         foreach (var requestProduct in dto.Products)
@@ -44,13 +50,13 @@ public class OrderService : IOrderService
                 .FirstOrDefault(p => p.Id == requestProduct.Productid);
 
             if (product is null)
-                throw new ArgumentException("Product with id: " + requestProduct.Productid + " was not found.");
+                throw new NotFoundException("Product with id = " + requestProduct.Productid + " was not found.");
 
             if (requestProduct.Quantity <= 0)
-                throw new ArgumentException("Quantity must be greater than zero for product with id: " + requestProduct.Productid);
+                throw new BadRequestException("Quantity must be greater than zero for product with id= " + requestProduct.Productid);
 
             if (requestProduct.Quantity > product.Stock)
-                throw new ArgumentException("Not enough stock for product with id: " + requestProduct.Productid);
+                throw new BadRequestException("Not enough stock for product with id = " + requestProduct.Productid);
 
             validatedItems.Add((product, requestProduct.Quantity));
         }

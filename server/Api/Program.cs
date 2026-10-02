@@ -1,3 +1,4 @@
+using Api;
 using DefaultNamespace;
 using Infrastructure;
 using Infrastructure.Entities;
@@ -18,11 +19,16 @@ builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<ProductDb>(_ => new ProductDb(productDbOptions));
 builder.Services.AddScoped<OrderDb>(_ => new OrderDb(orderDbOptions));
 
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 builder.Services.AddOpenApiDocument();
 builder.Services.AddControllers();
 builder.Services.AddCors();
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
 
 using (var scope = app.Services.CreateScope())
 {

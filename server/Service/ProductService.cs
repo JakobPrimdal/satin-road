@@ -2,6 +2,7 @@ using Infrastructure;
 using Infrastructure.Entities;
 using LinqToDB;
 using Service.Dtos;
+using Service.Exceptions;
 
 namespace Service;
 
@@ -30,13 +31,15 @@ public class ProductService: IProductService
         return completeProducts;
     }
 
-    public ProductResponseDTO? GetProduct(int id)
+    public ProductResponseDTO GetProduct(int id)
     {
         Product? product = db.Products()
             .LoadWith(p => p.Images)
             .FirstOrDefault(p => p.Id == id);
 
-        return product is null ? null : ToDto(product);
+        return product is null ? 
+            throw new NotFoundException("Product with id = " + id + " was not found.") 
+            : ToDto(product);
     }
 
     public List<ProductResponseDTO> SearchProducts(string search)
@@ -71,11 +74,11 @@ public class ProductService: IProductService
         return ToDto(product);
     }
 
-    public ProductResponseDTO? UpdateProduct(int id, ProductRequestDTO dto)
+    public ProductResponseDTO UpdateProduct(int id, ProductRequestDTO dto)
     {
         Product? product = db.Products().FirstOrDefault(p => p.Id == id);
         if (product is null)
-            return null;
+            throw new NotFoundException("Product with id = " + id + " was not found.");
 
         product.Title = dto.Title;
         product.Description = dto.Description;
@@ -90,34 +93,38 @@ public class ProductService: IProductService
         return GetProduct(id);
     }
 
-    public bool DeleteProduct(int id)
+    public void DeleteProduct(int id)
     {
         Product? product = db.Products().FirstOrDefault(p => p.Id == id);
         if (product is null)
-            return false;
+            throw new NotFoundException("Product with id = " + id + " was not found.");
 
         db.ProductImages().Where(i => i.ProductId == id).Delete();
         db.Products().Where(p => p.Id == id).Delete();
-
-        return true;
     }
 
     
     // Image CRUD
     
-    public ProductImageDataDTO? GetImageData(int imageId)
+    public ProductImageDataDTO GetImageData(int imageId)
     {
         var image = db.ProductImages().FirstOrDefault(i => i.Id == imageId);
         
-        return image is null ? null : new ProductImageDataDTO
-        {
-            Data = image.Image,
-            Extension = image.Extension
-        };
+        return image is null ? 
+            throw new NotFoundException("Image with id = " + imageId + " was not found.") 
+            : new ProductImageDataDTO
+            {
+                Data = image.Image,
+                Extension = image.Extension
+            };
     }
     
     public List<ProductImageDTO> AddImages(int productId, List<ProductImageDataDTO> files)
     {
+        bool productExists = db.Products().Any(p => p.Id == productId);
+        if (!productExists)
+            throw new NotFoundException("Product with id = " + productId + " was not found.");
+        
         int nextSortOrder = db.ProductImages().Count(i => i.ProductId == productId);
         bool hasPrimaryAlready = db.ProductImages().Any(i => i.ProductId == productId && i.IsPrimary);
 
@@ -151,9 +158,13 @@ public class ProductService: IProductService
         return saved;
     }
 
-    public bool DeleteImage(int imageId)
+    public void DeleteImage(int imageId)
     {
-        return db.ProductImages().Where(i => i.Id == imageId).Delete() > 0;
+        var image = db.ProductImages().FirstOrDefault(i => i.Id == imageId);
+        if (image is null)
+            throw new NotFoundException("Image with id = " + imageId + " was not found.");
+        
+        db.ProductImages().Where(i => i.Id == imageId).Delete();
     }
 
     private static ProductResponseDTO ToDto(Product p) => new()
