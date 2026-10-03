@@ -8,6 +8,6 @@ public class ProductResponseDTO
     public string Description { get; set; } = "";
     public int Stock { get; set; }
     public int CategoryId { get; set; }
-    public int VendorId { get; set; }
+    public string VendorId { get; set; } = "";
     public List<ProductImageDTO> Images { get; set; }
 }
