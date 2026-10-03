@@ -1,12 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Infrastructure;
+using Infrastructure.Entities;
 using LinqToDB;
 using LinqToDB.Async;
 using Service.Exceptions;
 
 namespace Service;
 
-public class AuthService (MyDbConnection db,TokenService tokenService)   
+public class AuthService (LoginDb db,TokenService tokenService)   
 {
     public async Task<UserDto> Register(RegisterRequestDto dto)
     {

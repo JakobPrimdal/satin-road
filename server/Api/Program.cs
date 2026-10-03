@@ -18,11 +18,11 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = "Data Source=db.db;Foreign Keys=True";
 var options = new DataOptions().UseSQLite(connectionString);
 
-var userDbOptions = new DataOptions<MyDbConnection>(options);
+var userDbOptions = new DataOptions<LoginDb>(options);
 var productDbOptions = new DataOptions<ProductDb>(options);
 var orderDbOptions = new DataOptions<OrderDb>(options);
 
-builder.Services.AddScoped<MyDbConnection>(_ => new MyDbConnection(userDbOptions));
+builder.Services.AddScoped<LoginDb>(_ => new LoginDb(userDbOptions));
 builder.Services.AddScoped<ProductDb>(_ => new ProductDb(productDbOptions));
 builder.Services.AddScoped<OrderDb>(_ => new OrderDb(orderDbOptions));
 
@@ -80,7 +80,7 @@ app.UseExceptionHandler();
 
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<MyDbConnection>();
+    var db = scope.ServiceProvider.GetRequiredService<LoginDb>();
     db.CreateTable<User>(tableOptions: TableOptions.CreateIfNotExists);
 
     var adminUsername = builder.Configuration["Admin:Username"] ?? "admin";

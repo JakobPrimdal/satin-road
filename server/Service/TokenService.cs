@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using System.Text;
 using Infrastructure;
+using Infrastructure.Entities;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
