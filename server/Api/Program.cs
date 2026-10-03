@@ -6,6 +6,7 @@ using Infrastructure.Entities;
 using LinqToDB;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using LinqToDB.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using NSwag;
@@ -89,12 +90,50 @@ using (var scope = app.Services.CreateScope())
     await auth.SeedAdmin(adminUsername, adminPassword);
 
     var productDb = scope.ServiceProvider.GetRequiredService<ProductDb>();
-    productDb.CreateTable<Product>(tableOptions: TableOptions.CreateIfNotExists);
+
+    productDb.Execute("""
+                      CREATE TABLE IF NOT EXISTS [Product]
+                      (
+                          [Id]            INTEGER       NOT NULL PRIMARY KEY AUTOINCREMENT,
+                          [Title]         NVarChar(255) NOT NULL,
+                          [Description]   NVarChar(255) NOT NULL,
+                          [Price]         Decimal       NOT NULL,
+                          [Stock]         INTEGER       NOT NULL,
+                          [CreatedAtUtc]  DateTime2     NOT NULL,
+                          [UpdatedAtUtc]  DateTime2     NOT NULL,
+                          [CategoryId]    INTEGER       NOT NULL,
+                          [VendorId]      NVarChar(255) NOT NULL,
+                          FOREIGN KEY ([VendorId]) REFERENCES [User]([UserId])
+                      );
+                      """);
+
     productDb.CreateTable<ProductImage>(tableOptions: TableOptions.CreateIfNotExists);
 
     var orderDb = scope.ServiceProvider.GetRequiredService<OrderDb>();
-    orderDb.CreateTable<CustomerOrder>(tableOptions: TableOptions.CreateIfNotExists);
-    orderDb.CreateTable<OrderProduct>(tableOptions: TableOptions.CreateIfNotExists);
+
+    orderDb.Execute("""
+                    CREATE TABLE IF NOT EXISTS [CustomerOrder]
+                    (
+                        [Id]             INTEGER       NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        [CustomerId]     NVarChar(255) NOT NULL,
+                        [PurchasedAtUtc] DateTime2     NOT NULL,
+                        FOREIGN KEY ([CustomerId]) REFERENCES [User]([UserId])
+                    );
+                    """);
+
+    orderDb.Execute("""
+                    CREATE TABLE IF NOT EXISTS [OrderProduct]
+                    (
+                        [Id]                  INTEGER       NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        [OrderId]             INTEGER       NOT NULL,
+                        [ProductId]           INTEGER       NOT NULL,
+                        [VendorId]            NVarChar(255) NOT NULL,
+                        [Quantity]            INTEGER       NOT NULL,
+                        [UnitPriceAtPurchase] Decimal       NOT NULL,
+                        FOREIGN KEY ([OrderId]) REFERENCES [CustomerOrder]([Id]) ON DELETE CASCADE,
+                        FOREIGN KEY ([ProductId]) REFERENCES [Product]([Id])
+                    );
+                    """);
 }
 
 app.UseCors(config => config
