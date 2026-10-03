@@ -18,29 +18,36 @@ public class OrderService : IOrderService
         this.productDb = productDb;
     }
     
-    public List<OrderResponseDTO> GetCustomerOrders()
+    public List<OrderResponseDTO> GetCustomerOrders(string callerId, bool isAdmin)
     {
-        var orders = orderDb.CustomerOrders()
+        var query = orderDb.CustomerOrders()
             .LoadWith(o => o.Products)
             .ThenLoad(op => op.Product)
-            .ToList();
+            .AsQueryable();
+
+        if (!isAdmin)
+            query = query.Where(o => o.CustomerId == callerId);
         
-        return orders.Select(ToDto).ToList();
+        return query.ToList().Select(ToDto).ToList();
     }
 
-    public OrderResponseDTO GetCustomerOrder(int orderId)
+    public OrderResponseDTO GetCustomerOrder(int orderId, string callerId, bool isAdmin)
     {
         var customerOrder = orderDb.CustomerOrders()
             .LoadWith(o => o.Products)
             .ThenLoad(op => op.Product)
             .FirstOrDefault(o => o.Id == orderId);
+        
+        if (customerOrder is null)
+            throw new NotFoundException("Order with id = " + orderId + " was not found.");
 
-        return customerOrder is null ? 
-            throw new NotFoundException("Order with id = " + orderId + " was not found.") 
-            : ToDto(customerOrder);
+        if (!isAdmin && customerOrder.CustomerId != callerId)
+            throw new ForbiddenException("You do not have permission to view this order.");
+        
+        return ToDto(customerOrder);
     }
 
-    public OrderResponseDTO CreateCustomerOrder(OrderRequestDTO dto)
+    public OrderResponseDTO CreateCustomerOrder(OrderRequestDTO dto, string customerId)
     {
         if (dto.Products is null || dto.Products.Count == 0)
             throw new BadRequestException("An order must contain at least one product.");
@@ -66,7 +73,7 @@ public class OrderService : IOrderService
 
         var order = new CustomerOrder
         {
-            CustomerId = dto.CustomerId,
+            CustomerId = customerId,
             PurchasedAtUtc = DateTime.UtcNow
         };
 
@@ -90,7 +97,12 @@ public class OrderService : IOrderService
             productDb.Update(product);
         }
 
-        return GetCustomerOrder(order.Id)!;
+        var customerOrder = orderDb.CustomerOrders()
+            .LoadWith(o => o.Products)
+            .ThenLoad(op => op.Product)
+            .FirstOrDefault(o => o.Id == order.Id);
+        
+        return ToDto(customerOrder!);
     }
 
     private static OrderResponseDTO ToDto(CustomerOrder o) => new()

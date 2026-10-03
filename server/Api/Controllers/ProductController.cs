@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Service;
@@ -6,6 +7,7 @@ using Service.Dtos;
 namespace Api.Controllers;
 
 [ApiController]
+[Authorize]
 public class ProductController(ProductService service) : ControllerBase
 {
     [HttpGet(nameof(GetProducts))]
@@ -29,19 +31,19 @@ public class ProductController(ProductService service) : ControllerBase
     [HttpPost(nameof(CreateProduct))]
     public ProductResponseDTO CreateProduct([FromForm] ProductRequestDTO dto)
     {
-        return service.CreateProduct(dto);
+        return service.CreateProduct(dto, User.GetUserId());
     }
 
     [HttpPut(nameof(UpdateProduct))]
     public ProductResponseDTO UpdateProduct(int id, [FromForm] ProductRequestDTO dto)
     {
-        return service.UpdateProduct(id, dto);
+        return service.UpdateProduct(id, dto, User.GetUserId(), User.IsAdmin());
     }
 
     [HttpDelete(nameof(DeleteProduct))]
     public IActionResult DeleteProduct(int id)
     {
-        service.DeleteProduct(id);
+        service.DeleteProduct(id, User.GetUserId(), User.IsAdmin());
         return NoContent();
     }
     
@@ -77,13 +79,13 @@ public class ProductController(ProductService service) : ControllerBase
             });
         }
 
-        return service.AddImages(productId, uploads);
+        return service.AddImages(productId, uploads, User.GetUserId(), User.IsAdmin());
     }
 
     [HttpDelete(nameof(DeleteImage))]
     public IActionResult DeleteImage(int imageId)
     {
-        service.DeleteImage(imageId);
+        service.DeleteImage(imageId, User.GetUserId(), User.IsAdmin());
         return NoContent();
     }
 }

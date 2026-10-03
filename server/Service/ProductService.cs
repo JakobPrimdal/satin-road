@@ -55,7 +55,7 @@ public class ProductService: IProductService
         return matches.Select(ToDto).ToList();
     }
 
-    public ProductResponseDTO CreateProduct(ProductRequestDTO dto)
+    public ProductResponseDTO CreateProduct(ProductRequestDTO dto, string vendorId)
     {
         Product product = new Product()
         {
@@ -64,7 +64,7 @@ public class ProductService: IProductService
             Price = dto.Price,
             Stock = dto.Stock,
             CategoryId = dto.CategoryId,
-            VendorId = dto.VendorId,
+            VendorId = vendorId,
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow
         };
@@ -74,18 +74,20 @@ public class ProductService: IProductService
         return ToDto(product);
     }
 
-    public ProductResponseDTO UpdateProduct(int id, ProductRequestDTO dto)
+    public ProductResponseDTO UpdateProduct(int id, ProductRequestDTO dto, string callerId, bool isAdmin)
     {
         Product? product = db.Products().FirstOrDefault(p => p.Id == id);
         if (product is null)
             throw new NotFoundException("Product with id = " + id + " was not found.");
+
+        if (!isAdmin && product.VendorId != callerId)
+            throw new ForbiddenException("You do not have permission to modify this product.");
 
         product.Title = dto.Title;
         product.Description = dto.Description;
         product.Price = dto.Price;
         product.Stock = dto.Stock;
         product.CategoryId = dto.CategoryId;
-        product.VendorId = dto.VendorId;
         product.UpdatedAtUtc = DateTime.UtcNow;
 
         db.Update(product);
@@ -93,11 +95,14 @@ public class ProductService: IProductService
         return GetProduct(id);
     }
 
-    public void DeleteProduct(int id)
+    public void DeleteProduct(int id, string callerId, bool isAdmin)
     {
         Product? product = db.Products().FirstOrDefault(p => p.Id == id);
         if (product is null)
             throw new NotFoundException("Product with id = " + id + " was not found.");
+
+        if (!isAdmin && product.VendorId != callerId)
+            throw new ForbiddenException("You do not have permission to modify this product.");
 
         db.ProductImages().Where(i => i.ProductId == id).Delete();
         db.Products().Where(p => p.Id == id).Delete();
@@ -119,11 +124,14 @@ public class ProductService: IProductService
             };
     }
     
-    public List<ProductImageDTO> AddImages(int productId, List<ProductImageDataDTO> files)
+    public List<ProductImageDTO> AddImages(int productId, List<ProductImageDataDTO> files, string callerId, bool isAdmin)
     {
-        bool productExists = db.Products().Any(p => p.Id == productId);
-        if (!productExists)
+        var product = db.Products().FirstOrDefault(p => p.Id == productId);
+        if (product is null)
             throw new NotFoundException("Product with id = " + productId + " was not found.");
+        
+        if (!isAdmin && product.VendorId != callerId)
+            throw new ForbiddenException("You do not have permission to add images to this product.");
         
         int nextSortOrder = db.ProductImages().Count(i => i.ProductId == productId);
         bool hasPrimaryAlready = db.ProductImages().Any(i => i.ProductId == productId && i.IsPrimary);
@@ -158,11 +166,15 @@ public class ProductService: IProductService
         return saved;
     }
 
-    public void DeleteImage(int imageId)
+    public void DeleteImage(int imageId, string callerId, bool isAdmin)
     {
         var image = db.ProductImages().FirstOrDefault(i => i.Id == imageId);
         if (image is null)
             throw new NotFoundException("Image with id = " + imageId + " was not found.");
+
+        var product = db.Products().FirstOrDefault(p => p.Id == image.ProductId);
+        if (!isAdmin && product is not null && product.VendorId != callerId)
+            throw new ForbiddenException("You do not have permission to delete this image.");
         
         db.ProductImages().Where(i => i.Id == imageId).Delete();
     }

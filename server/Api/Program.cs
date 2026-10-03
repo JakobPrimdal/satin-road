@@ -77,6 +77,7 @@ builder.Services.AddAuthorization();
 var app = builder.Build();
 
 app.UseExceptionHandler();
+app.UseStatusCodePages(); // Let's caller see unauthorized error-dto
 
 using (var scope = app.Services.CreateScope())
 {

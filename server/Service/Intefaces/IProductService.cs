@@ -10,15 +10,15 @@ public interface IProductService
 
     public List<ProductResponseDTO> SearchProducts(string search);
 
-    public ProductResponseDTO CreateProduct(ProductRequestDTO dto);
+    public ProductResponseDTO CreateProduct(ProductRequestDTO dto, string vendorId);
 
-    public ProductResponseDTO UpdateProduct(int id, ProductRequestDTO dto);
+    public ProductResponseDTO UpdateProduct(int id, ProductRequestDTO dto, string callerId, bool isAdmin);
 
-    public void DeleteProduct(int id);
+    public void DeleteProduct(int id, string callerId, bool isAdmin);
 
-    public List<ProductImageDTO> AddImages(int productId, List<ProductImageDataDTO> files);
+    public List<ProductImageDTO> AddImages(int productId, List<ProductImageDataDTO> files, string callerId, bool isAdmin);
 
     public ProductImageDataDTO GetImageData(int imageId);
 
-    public void DeleteImage(int imageId);
+    public void DeleteImage(int imageId, string callerId, bool isAdmin);
 }
