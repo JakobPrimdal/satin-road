@@ -2,6 +2,7 @@
 using Infrastructure;
 using LinqToDB;
 using LinqToDB.Async;
+using Service.Exceptions;
 
 namespace Service;
 
@@ -14,14 +15,14 @@ public class AuthService (MyDbConnection db,TokenService tokenService)
 
         // validate
         if (username.Length < 3)
-            throw new ValidationException("Username must be at least 3 characters");
+            throw new BadRequestException("Username must be at least 3 characters");
         if (username.Length > 30)
-            throw new ValidationException("Username can be at most 30 characters");
+            throw new BadRequestException("Username can be at most 30 characters");
         if (password.Length < 1)
-            throw new ValidationException("Password must be at least 1 characters");
+            throw new BadRequestException("Password must be at least 1 characters");
         
         if (await db.Users.AnyAsync(u => u.Username == username))
-            throw new ValidationException("Username is already taken");
+            throw new BadRequestException("Username is already taken");
 
         //  Build the entity
         var user = new User
@@ -45,18 +46,18 @@ public class AuthService (MyDbConnection db,TokenService tokenService)
 
         
         if (user is null || !BCrypt.Net.BCrypt.Verify(dto.Password ?? "", user.PasswordHash))
-            throw new UnauthorizedAccessException("Invalid username or password");
+            throw new UnauthorizedException("Invalid username or password");
 
         // When FBI blocks
         if (!user.IsActive)
-            throw new UnauthorizedAccessException("This account has been seized by the FBI");
+            throw new UnauthorizedException("This account has been seized by the FBI");
 
         return new LoginResponseDto(tokenService.CreateToken(user), new UserDto(user));
     }
     public async Task<UserDto> GetUser(string userId)
     {
         var user = await db.Users.FirstOrDefaultAsync(u => u.UserId == userId)
-                   ?? throw new KeyNotFoundException("User not found");
+                   ?? throw new NotFoundException("User not found");
         return new UserDto(user);
     }
     
