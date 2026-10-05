@@ -41,10 +41,17 @@ var jwt = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()!;
 builder.Services.AddSingleton(jwt);
 builder.Services.AddSingleton<TokenService>();
 
+
+builder.Services.AddSingleton<IRandomProvider, RandomProvider>();
+builder.Services.AddSingleton(
+    builder.Configuration.GetSection("Fbi").Get<FbiSettings>() ?? new FbiSettings(0.01));
+
+builder.Services.AddScoped<FbiService>();
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(o =>
     {
-        o.MapInboundClaims = false;   // keep claim names exactly as written in TokenService
+        o.MapInboundClaims = false; 
         o.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
