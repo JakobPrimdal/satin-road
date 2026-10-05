@@ -4,15 +4,21 @@ namespace Service;
 
 public interface IProductService
 {
-    public List<ProductResponseDTO> GetProducts();
+    public List<ProductResponseDTO> GetProducts(string callerId);
 
-    public ProductResponseDTO GetProduct(int id);
+    public List<ProductResponseDTO> GetMyProducts(string callerId);
 
-    public List<ProductResponseDTO> SearchProducts(string search);
+    public List<ProductResponseDTO> GetPendingProducts();
 
-    public ProductResponseDTO CreateProduct(ProductRequestDTO dto, string vendorId);
+    public ProductResponseDTO GetProduct(int id, string callerId, bool isAdmin);
+
+    public List<ProductResponseDTO> SearchProducts(string search, string callerId);
+
+    public ProductResponseDTO CreateProduct(ProductRequestDTO dto, string vendorId, bool isAdmin);
 
     public ProductResponseDTO UpdateProduct(int id, ProductRequestDTO dto, string callerId, bool isAdmin);
+
+    public ProductResponseDTO SetProductApproval(int productId, string status);
 
     public void DeleteProduct(int id, string callerId, bool isAdmin);
 

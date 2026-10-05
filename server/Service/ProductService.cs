@@ -15,47 +15,66 @@ public class ProductService: IProductService
         this.db = db;
     }
     
-    public List<ProductResponseDTO> GetProducts()
+    public List<ProductResponseDTO> GetProducts(string callerId)
     {
-        List<Product> allProducts = db.Products()
+        return db.Products()
             .LoadWith(p => p.Images)
+            .Where(p => p.Status == "Approved" && p.VendorId != callerId)
+            .ToList()
+            .Select(ToDto)
             .ToList();
-
-        List<ProductResponseDTO> completeProducts = new();
-
-        foreach (var p in allProducts)
-        {
-            completeProducts.Add(ToDto(p));
-        }
-
-        return completeProducts;
     }
 
-    public ProductResponseDTO GetProduct(int id)
+    public List<ProductResponseDTO> GetMyProducts(string callerId)
+    {
+        return db.Products()
+            .LoadWith(p => p.Images)
+            .Where(p => p.VendorId == callerId)
+            .ToList()
+            .Select(ToDto)
+            .ToList();
+    }
+
+    public List<ProductResponseDTO> GetPendingProducts()
+    {
+        return db.Products()
+            .LoadWith(p => p.Images)
+            .Where(p => p.Status == "Pending")
+            .ToList()
+            .Select(ToDto)
+            .ToList();
+    }
+
+    public ProductResponseDTO GetProduct(int id, string callerId, bool isAdmin)
     {
         Product? product = db.Products()
             .LoadWith(p => p.Images)
             .FirstOrDefault(p => p.Id == id);
 
-        return product is null ? 
-            throw new NotFoundException("Product with id = " + id + " was not found.") 
-            : ToDto(product);
+        if (product is null)
+            throw new NotFoundException("Product with id = " + id + " was not found.");
+
+        if (!isAdmin && product.VendorId != callerId)
+            throw new ForbiddenException("You do not have permission to modify this product.");
+
+        return ToDto(product);
     }
 
-    public List<ProductResponseDTO> SearchProducts(string search)
+    public List<ProductResponseDTO> SearchProducts(string search, string callerId)
     {
         if (string.IsNullOrWhiteSpace(search))
-            return GetProducts();
+            return GetProducts(callerId);
 
         List<Product> matches = db.Products()
             .LoadWith(p => p.Images)
-            .Where(p => p.Title.Contains(search) || p.Description.Contains(search))
+            .Where(p => p.Status == "Approved" && p.VendorId != callerId 
+                                               && p.Title.Contains(search) || p.Description.Contains(search))
             .ToList();
 
         return matches.Select(ToDto).ToList();
     }
 
-    public ProductResponseDTO CreateProduct(ProductRequestDTO dto, string vendorId)
+    public ProductResponseDTO CreateProduct(ProductRequestDTO dto, string vendorId, bool isAdmin)
     {
         EnsureCategoryExists(dto.CategoryId);
         
@@ -67,6 +86,7 @@ public class ProductService: IProductService
             Stock = dto.Stock,
             CategoryId = dto.CategoryId,
             VendorId = vendorId,
+            Status = isAdmin ? "Approved" : "Pending",
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow
         };
@@ -94,9 +114,26 @@ public class ProductService: IProductService
         product.CategoryId = dto.CategoryId;
         product.UpdatedAtUtc = DateTime.UtcNow;
 
+        if (!isAdmin)
+            product.Status = "Pending";
+
         db.Update(product);
 
-        return GetProduct(id);
+        return GetProduct(id, callerId, isAdmin);
+    }
+
+    public ProductResponseDTO SetProductApproval(int productId, string status)
+    {
+        if (!db.Products().Any(p => p.Id == productId))
+            throw new NotFoundException("Product with id = " + productId + " was not found.");
+        
+        // Updates only the status column, so UpdatedAtUtc is not touched
+        db.Products()
+            .Where(p => p.Id == productId)
+            .Set(p => p.Status, status)
+            .Update();
+
+        return ToDto(db.Products().FirstOrDefault(p => p.Id == productId)!);
     }
 
     public void DeleteProduct(int id, string callerId, bool isAdmin)
@@ -118,10 +155,16 @@ public class ProductService: IProductService
     public ProductImageDataDTO GetImageData(int imageId)
     {
         var image = db.ProductImages().FirstOrDefault(i => i.Id == imageId);
+
+        if (image is null)
+            throw new NotFoundException("Image with id = " + imageId + " was not found.");
+
+        var product = db.Products().FirstOrDefault(p => p.Id == image.ProductId);
+        if (product is null || product.Status != "Approved")
+            throw new NotFoundException("Image with id = " + imageId +
+                                        " was not found - because it's belonging product was not found.");
         
-        return image is null ? 
-            throw new NotFoundException("Image with id = " + imageId + " was not found.") 
-            : new ProductImageDataDTO
+        return new ProductImageDataDTO
             {
                 Data = image.Image,
                 Extension = image.Extension
@@ -167,6 +210,12 @@ public class ProductService: IProductService
             nextSortOrder++;
         }
 
+        if (!isAdmin && saved.Count > 0)
+            db.Products()
+                .Where(p => p.Id == productId)
+                .Set(p => p.Status, "Pending")
+                .Update();
+
         return saved;
     }
 
@@ -200,6 +249,7 @@ public class ProductService: IProductService
         Stock = p.Stock,
         CategoryId = p.CategoryId,
         VendorId = p.VendorId,
+        Status = p.Status,
         Images = p.Images.Select(i => new ProductImageDTO
         {
             Id = i.Id,
