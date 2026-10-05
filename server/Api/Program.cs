@@ -117,7 +117,7 @@ using (var scope = app.Services.CreateScope())
                           [VendorId]      NVarChar(255) NOT NULL,
                           [Status]        NVarChar(20)  NOT NULL DEFAULT 'Pending',
                           [IsActive]      INTEGER       NOT NULL DEFAULT 1,
-                          FOREIGN KEY ([VendorId]) REFERENCES [User]([UserId],
+                          FOREIGN KEY ([VendorId]) REFERENCES [User]([UserId]),
                           FOREIGN KEY ([CategoryId]) REFERENCES [Category]([Id])
                       );
                       """);
