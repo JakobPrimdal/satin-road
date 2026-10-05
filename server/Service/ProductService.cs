@@ -62,8 +62,8 @@ public class ProductService: IProductService
         IsProductValid(dto);
         Product product = new Product()
         {
-            Title = dto.Title,
-            Description = dto.Description,
+            Title = dto.Title.Trim(),
+            Description = (dto.Description ?? "").Trim(),
             Price = dto.Price,
             Stock = dto.Stock,
             CategoryId = dto.CategoryId,
@@ -89,8 +89,8 @@ public class ProductService: IProductService
         if (!isAdmin && product.VendorId != callerId)
             throw new ForbiddenException("You do not have permission to modify this product.");
 
-        product.Title = dto.Title;
-        product.Description = dto.Description;
+        product.Title = dto.Title.Trim();
+        product.Description =(dto.Description ?? "").Trim();
         product.Price = dto.Price;
         product.Stock = dto.Stock;
         product.CategoryId = dto.CategoryId;
