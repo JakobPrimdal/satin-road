@@ -57,6 +57,8 @@ public class ProductService: IProductService
 
     public ProductResponseDTO CreateProduct(ProductRequestDTO dto, string vendorId)
     {
+        EnsureCategoryExists(dto.CategoryId);
+        
         Product product = new Product()
         {
             Title = dto.Title,
@@ -82,6 +84,8 @@ public class ProductService: IProductService
 
         if (!isAdmin && product.VendorId != callerId)
             throw new ForbiddenException("You do not have permission to modify this product.");
+        
+        EnsureCategoryExists(dto.CategoryId);
 
         product.Title = dto.Title;
         product.Description = dto.Description;
@@ -179,6 +183,14 @@ public class ProductService: IProductService
         db.ProductImages().Where(i => i.Id == imageId).Delete();
     }
 
+    // Helpers
+    
+    private void EnsureCategoryExists(int categoryId)
+    {
+        if (!db.Categories().Any(c => c.Id == categoryId))
+            throw new BadRequestException("Category with id = " + categoryId + " does not exist.");
+    }
+    
     private static ProductResponseDTO ToDto(Product p) => new()
     {
         Id = p.Id,
