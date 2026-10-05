@@ -28,6 +28,7 @@ builder.Services.AddScoped<OrderDb>(_ => new OrderDb(orderDbOptions));
 
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<OrderService>();
+builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<AuthService>();
 
 // ---------- error handling ----------
@@ -93,6 +94,14 @@ using (var scope = app.Services.CreateScope())
     var productDb = scope.ServiceProvider.GetRequiredService<ProductDb>();
 
     productDb.Execute("""
+                      CREATE TABLE IF NOT EXISTS [Category]
+                      (
+                          [Id]   INTEGER       NOT NULL PRIMARY KEY AUTOINCREMENT,
+                          [Name] NVarChar(255) NOT NULL UNIQUE
+                      );
+                      """);
+    
+    productDb.Execute("""
                       CREATE TABLE IF NOT EXISTS [Product]
                       (
                           [Id]            INTEGER       NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -104,7 +113,8 @@ using (var scope = app.Services.CreateScope())
                           [UpdatedAtUtc]  DateTime2     NOT NULL,
                           [CategoryId]    INTEGER       NOT NULL,
                           [VendorId]      NVarChar(255) NOT NULL,
-                          FOREIGN KEY ([VendorId]) REFERENCES [User]([UserId])
+                          FOREIGN KEY ([VendorId])   REFERENCES [User]([UserId]),
+                          FOREIGN KEY ([CategoryId]) REFERENCES [Category]([Id])
                       );
                       """);
 
