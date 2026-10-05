@@ -16,6 +16,7 @@ public class Product
     [Column] [NotNull] public DateTime UpdatedAtUtc { get; set; }
     [Column] [NotNull] public int CategoryId { get; set; }
     [Column] [NotNull] public string VendorId { get; set; }
+    [Column] [NotNull] public string Status { get; set; }
 
     [Association(ThisKey = nameof(Id), OtherKey = nameof(ProductImage.ProductId))]
     public IEnumerable<ProductImage> Images { get; set; } = [];
