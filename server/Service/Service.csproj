@@ -5,9 +5,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    
     <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
     <PackageReference Include="Facet" Version="6.6.12" />
     <PackageReference Include="Facet.Extensions" Version="6.6.12" />
+    <PackageReference Include="linq2db" Version="6.5.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />
   </ItemGroup>
 
