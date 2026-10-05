@@ -108,8 +108,19 @@ using (var scope = app.Services.CreateScope())
                       );
                       """);
 
-    productDb.CreateTable<ProductImage>(tableOptions: TableOptions.CreateIfNotExists);
-
+    productDb.Execute("""
+                      CREATE TABLE IF NOT EXISTS [ProductImage]
+                      (
+                          [Id]        INTEGER       NOT NULL PRIMARY KEY AUTOINCREMENT,
+                          [ProductId] INTEGER       NOT NULL,
+                          [IsPrimary] Bit           NOT NULL,
+                          [SortOrder] INTEGER       NOT NULL,
+                          [Extension] NVarChar(255) NOT NULL,
+                          [Image]     VarBinary     NOT NULL,
+                          FOREIGN KEY ([ProductId]) REFERENCES [Product]([Id]) ON DELETE CASCADE
+                      );
+                      """);
+    
     var orderDb = scope.ServiceProvider.GetRequiredService<OrderDb>();
 
     orderDb.Execute("""
