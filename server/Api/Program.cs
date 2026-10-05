@@ -31,6 +31,8 @@ builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<AuthService>();
 
+builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
+
 // ---------- error handling ----------
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
@@ -114,7 +116,8 @@ using (var scope = app.Services.CreateScope())
                           [CategoryId]    INTEGER       NOT NULL,
                           [VendorId]      NVarChar(255) NOT NULL,
                           [Status]        NVarChar(20)  NOT NULL DEFAULT 'Pending',
-                          FOREIGN KEY ([VendorId])   REFERENCES [User]([UserId]),
+                          [IsActive]      INTEGER       NOT NULL DEFAULT 1,
+                          FOREIGN KEY ([VendorId]) REFERENCES [User]([UserId],
                           FOREIGN KEY ([CategoryId]) REFERENCES [Category]([Id])
                       );
                       """);
