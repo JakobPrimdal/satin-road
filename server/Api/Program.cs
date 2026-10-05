@@ -28,6 +28,7 @@ builder.Services.AddScoped<OrderDb>(_ => new OrderDb(orderDbOptions));
 
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<OrderService>();
+builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<AuthService>();
 
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
@@ -95,6 +96,14 @@ using (var scope = app.Services.CreateScope())
     var productDb = scope.ServiceProvider.GetRequiredService<ProductDb>();
 
     productDb.Execute("""
+                      CREATE TABLE IF NOT EXISTS [Category]
+                      (
+                          [Id]   INTEGER       NOT NULL PRIMARY KEY AUTOINCREMENT,
+                          [Name] NVarChar(255) NOT NULL UNIQUE
+                      );
+                      """);
+    
+    productDb.Execute("""
                       CREATE TABLE IF NOT EXISTS [Product]
                       (
                           [Id]            INTEGER       NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -108,12 +117,24 @@ using (var scope = app.Services.CreateScope())
                           [VendorId]      NVarChar(255) NOT NULL,
                           [Status]        NVarChar(20)  NOT NULL DEFAULT 'Pending',
                           [IsActive]      INTEGER       NOT NULL DEFAULT 1,
-                          FOREIGN KEY ([VendorId]) REFERENCES [User]([UserId])
+                          FOREIGN KEY ([VendorId]) REFERENCES [User]([UserId]),
+                          FOREIGN KEY ([CategoryId]) REFERENCES [Category]([Id])
                       );
                       """);
 
-    productDb.CreateTable<ProductImage>(tableOptions: TableOptions.CreateIfNotExists);
-
+    productDb.Execute("""
+                      CREATE TABLE IF NOT EXISTS [ProductImage]
+                      (
+                          [Id]        INTEGER       NOT NULL PRIMARY KEY AUTOINCREMENT,
+                          [ProductId] INTEGER       NOT NULL,
+                          [IsPrimary] Bit           NOT NULL,
+                          [SortOrder] INTEGER       NOT NULL,
+                          [Extension] NVarChar(255) NOT NULL,
+                          [Image]     VarBinary     NOT NULL,
+                          FOREIGN KEY ([ProductId]) REFERENCES [Product]([Id]) ON DELETE CASCADE
+                      );
+                      """);
+    
     var orderDb = scope.ServiceProvider.GetRequiredService<OrderDb>();
 
     orderDb.Execute("""

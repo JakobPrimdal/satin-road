@@ -15,4 +15,9 @@ public class ProductDb(DataOptions<ProductDb> dataOptions) : DataConnection(data
     {
         return this.GetTable<ProductImage>();
     }
+
+    public ITable<Category> Categories()
+    {
+        return this.GetTable<Category>();
+    }
 }

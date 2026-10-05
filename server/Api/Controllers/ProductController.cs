@@ -1,3 +1,4 @@
+using Infrastructure.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
@@ -13,31 +14,51 @@ public class ProductController(ProductService service) : ControllerBase
     [HttpGet(nameof(GetProducts))]
     public List<ProductResponseDTO> GetProducts()
     {
-        return service.GetProducts();
+        return service.GetProducts(User.GetUserId());
+    }
+
+    [HttpGet(nameof(GetMyProducts))]
+    public List<ProductResponseDTO> GetMyProducts()
+    {
+        return service.GetMyProducts(User.GetUserId());
+    }
+
+    [Authorize(Roles = Roles.Admin)]
+    [HttpGet(nameof(GetPendingProducts))]
+    public List<ProductResponseDTO> GetPendingProducts()
+    {
+        return service.GetPendingProducts();
     }
 
     [HttpGet(nameof(GetProduct))]
     public ActionResult<ProductResponseDTO> GetProduct(int id)
     {
-        return service.GetProduct(id);
+        return service.GetProduct(id, User.GetUserId(), User.IsAdmin());
     }
 
     [HttpGet(nameof(SearchProducts))]
     public List<ProductResponseDTO> SearchProducts(string search)
     {
-        return service.SearchProducts(search);
+        return service.SearchProducts(search, User.GetUserId());
     }
 
     [HttpPost(nameof(CreateProduct))]
     public ProductResponseDTO CreateProduct([FromForm] ProductRequestDTO dto)
     {
-        return service.CreateProduct(dto, User.GetUserId());
+        return service.CreateProduct(dto, User.GetUserId(), User.IsAdmin());
     }
 
     [HttpPut(nameof(UpdateProduct))]
     public ProductResponseDTO UpdateProduct(int id, [FromForm] ProductRequestDTO dto)
     {
         return service.UpdateProduct(id, dto, User.GetUserId(), User.IsAdmin());
+    }
+
+    [Authorize(Roles = Roles.Admin)]
+    [HttpPut(nameof(SetProductApproval))]
+    public ProductResponseDTO SetProductApproval(int productId, string status)
+    {
+        return service.SetProductApproval(productId, status);
     }
 
     [HttpDelete(nameof(DeleteProduct))]

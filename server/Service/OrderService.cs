@@ -57,10 +57,14 @@ public class OrderService : IOrderService
         foreach (var requestProduct in dto.Products)
         {
             var product = productDb.Products()
-                .FirstOrDefault(p => p.Id == requestProduct.Productid);
+                .FirstOrDefault(p => p.Id == requestProduct.Productid && p.Status == "Approved");
 
             if (product is null)
                 throw new NotFoundException("Product with id = " + requestProduct.Productid + " was not found.");
+
+            if (product.VendorId == customerId)
+                throw new BadRequestException("You cannot order your own product (product id = " +
+                                              requestProduct.Productid + ").");
 
             if (requestProduct.Quantity <= 0)
                 throw new BadRequestException("Quantity must be greater than zero for product with id= " + requestProduct.Productid);
