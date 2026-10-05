@@ -9,5 +9,9 @@ public class ProductResponseDTO
     public int Stock { get; set; }
     public int CategoryId { get; set; }
     public string VendorId { get; set; } = "";
+  
+    public string Status { get; set; } = "";
+   
+    public bool IsActive { get; set; }
     public List<ProductImageDTO> Images { get; set; }
 }
