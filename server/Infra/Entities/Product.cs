@@ -16,7 +16,9 @@ public class Product
     [Column] [NotNull] public DateTime UpdatedAtUtc { get; set; }
     [Column] [NotNull] public int CategoryId { get; set; }
     [Column] [NotNull] public string VendorId { get; set; }
-
+    [Column] [NotNull] public string Status { get; set; } = ProductStatus.Pending;  
+    [Column] [NotNull] public bool IsActive { get; set; } = true;  
+    
     [Association(ThisKey = nameof(Id), OtherKey = nameof(ProductImage.ProductId))]
     public IEnumerable<ProductImage> Images { get; set; } = [];
 }

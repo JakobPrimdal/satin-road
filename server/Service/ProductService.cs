@@ -9,10 +9,12 @@ namespace Service;
 public class ProductService: IProductService
 {
     private readonly ProductDb db;
+    private readonly LoginDb loginDb;
 
-    public ProductService(ProductDb db)
+    public ProductService(ProductDb db, LoginDb loginDb)
     {
         this.db = db;
+        this.loginDb = loginDb;
     }
     
     public List<ProductResponseDTO> GetProducts()
@@ -57,14 +59,17 @@ public class ProductService: IProductService
 
     public ProductResponseDTO CreateProduct(ProductRequestDTO dto, string vendorId)
     {
+        IsProductValid(dto);
         Product product = new Product()
         {
-            Title = dto.Title,
-            Description = dto.Description,
+            Title = dto.Title.Trim(),
+            Description = (dto.Description ?? "").Trim(),
             Price = dto.Price,
             Stock = dto.Stock,
             CategoryId = dto.CategoryId,
             VendorId = vendorId,
+            Status = ProductStatus.Pending, // admin must approve it
+            IsActive = true,
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow
         };
@@ -76,6 +81,7 @@ public class ProductService: IProductService
 
     public ProductResponseDTO UpdateProduct(int id, ProductRequestDTO dto, string callerId, bool isAdmin)
     {
+        IsProductValid(dto);
         Product? product = db.Products().FirstOrDefault(p => p.Id == id);
         if (product is null)
             throw new NotFoundException("Product with id = " + id + " was not found.");
@@ -83,8 +89,8 @@ public class ProductService: IProductService
         if (!isAdmin && product.VendorId != callerId)
             throw new ForbiddenException("You do not have permission to modify this product.");
 
-        product.Title = dto.Title;
-        product.Description = dto.Description;
+        product.Title = dto.Title.Trim();
+        product.Description =(dto.Description ?? "").Trim();
         product.Price = dto.Price;
         product.Stock = dto.Stock;
         product.CategoryId = dto.CategoryId;
@@ -188,6 +194,8 @@ public class ProductService: IProductService
         Stock = p.Stock,
         CategoryId = p.CategoryId,
         VendorId = p.VendorId,
+        Status = p.Status,
+        IsActive = p.IsActive,
         Images = p.Images.Select(i => new ProductImageDTO
         {
             Id = i.Id,
@@ -196,4 +204,20 @@ public class ProductService: IProductService
             Extension = i.Extension
         }).ToList()
     };
+    
+    private static void IsProductValid(ProductRequestDTO dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Title) )
+            throw new BadRequestException("Don't forget a title");
+        if (dto.Title.Trim().Length > 100)
+            throw new BadRequestException("Title is too long. 100 characters max.");
+        if ((dto.Description ?? "").Length > 2000)
+            throw new BadRequestException("Description is too long. 2000 characters max.");
+        if (dto.Price <= 0)
+            throw new BadRequestException("Price must be greater than 0.");
+        if (dto.Stock < 0)
+            throw new BadRequestException("Stock cannot be negative.");
+        if (dto.CategoryId <= 0)
+            throw new BadRequestException("Choose a category.");
+    }
 }

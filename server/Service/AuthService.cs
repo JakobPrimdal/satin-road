@@ -7,7 +7,7 @@ using Service.Exceptions;
 
 namespace Service;
 
-public class AuthService (LoginDb db,TokenService tokenService)   
+public class AuthService (LoginDb db,TokenService tokenService,IPasswordHasher passwordHasher)   
 {
     public async Task<UserDto> Register(RegisterRequestDto dto)
     {
@@ -30,7 +30,7 @@ public class AuthService (LoginDb db,TokenService tokenService)
         {
             UserId = Guid.NewGuid().ToString(),             
             Username = username,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+            PasswordHash = passwordHasher.HashAndSaltPassword(password),
             Role = Roles.User,
             IsActive = true
         };
@@ -46,7 +46,7 @@ public class AuthService (LoginDb db,TokenService tokenService)
         var user = await db.Users.FirstOrDefaultAsync(u => u.Username == username);
 
         
-        if (user is null || !BCrypt.Net.BCrypt.Verify(dto.Password ?? "", user.PasswordHash))
+        if (user is null || !passwordHasher.VerifyHashedPassword(dto.Password ?? "", user.PasswordHash))
             throw new UnauthorizedException("Invalid username or password");
 
         // When FBI blocks
@@ -71,7 +71,7 @@ public class AuthService (LoginDb db,TokenService tokenService)
         {
             UserId = Guid.NewGuid().ToString(),
             Username = username.Trim().ToLowerInvariant(),
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+            PasswordHash = passwordHasher.HashAndSaltPassword(password),
             Role = Roles.Admin,
             IsActive = true
         });
