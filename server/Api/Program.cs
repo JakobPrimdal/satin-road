@@ -30,6 +30,8 @@ builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<AuthService>();
 
+builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
+
 // ---------- error handling ----------
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
