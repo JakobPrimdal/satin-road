@@ -316,7 +316,7 @@ public class ProductService: IProductService
         if (stock < 0)
             throw new BadRequestException("Stock cannot be negative.");
 
-        Product? product = db.Products().FirstOrDefault(p => p.Id == id);
+        Product? product = db.Products().FirstOrDefault(p => p.Id == id &&!p.IsDeleted);
         if (product is null)
             throw new NotFoundException("Product with id = " + id + " was not found.");
 
