@@ -161,6 +161,7 @@ using (var scope = app.Services.CreateScope())
                         [VendorId]            NVarChar(255) NOT NULL,
                         [Quantity]            INTEGER       NOT NULL,
                         [UnitPriceAtPurchase] Decimal       NOT NULL,
+                        [DiscountPercent]     Decimal       NOT NULL DEFAULT 0,
                         FOREIGN KEY ([OrderId]) REFERENCES [CustomerOrder]([Id]) ON DELETE CASCADE,
                         FOREIGN KEY ([ProductId]) REFERENCES [Product]([Id])
                     );

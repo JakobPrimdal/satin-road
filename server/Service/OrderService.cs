@@ -75,6 +75,10 @@ public class OrderService : IOrderService
             validatedItems.Add((product, requestProduct.Quantity));
         }
 
+        var discountPerVendor = GetDiscountPercentPerVendor(
+            customerId, 
+            validatedItems.Select(i => i.Product.VendorId));
+        
         var order = new CustomerOrder
         {
             CustomerId = customerId,
@@ -85,13 +89,16 @@ public class OrderService : IOrderService
 
         foreach (var (product, quantity) in validatedItems)
         {
+            var discountPercent = discountPerVendor.GetValueOrDefault(product.VendorId, 0m);
+            
             var orderProduct = new OrderProduct
             {
                 OrderId = order.Id,
                 ProductId = product.Id,
                 VendorId = product.VendorId,
                 Quantity = quantity,
-                UnitPriceAtPurchase = product.Price
+                UnitPriceAtPurchase = product.Price,
+                DiscountPercent = discountPercent
             };
 
             orderDb.InsertWithInt32Identity(orderProduct);
@@ -120,8 +127,31 @@ public class OrderService : IOrderService
                 ProductId = op.ProductId,
                 ProductTitle = op.Product.Title,
                 Quantity = op.Quantity,
-                VendorId = op.VendorId
+                VendorId = op.VendorId,
+                DiscountPercent = op.DiscountPercent
             })
             .ToList()
     };
+
+    private Dictionary<string, int> CountPriorOrdersPerVendor(string customerId, IEnumerable<string> vendorIds)
+    {
+        var ids = vendorIds.Distinct().ToList();
+        
+        return (from o in orderDb.CustomerOrders()
+                join op in orderDb.OrderProducts() on o.Id equals op.OrderId
+                where o.CustomerId == customerId && ids.Contains(op.VendorId)
+                select new { op.VendorId, op.OrderId })
+            .Distinct()
+            .ToList()
+            .GroupBy(x => x.VendorId)
+            .ToDictionary(g => g.Key, g => g.Count());
+    }
+
+    private Dictionary<string, decimal> GetDiscountPercentPerVendor(string customerId, IEnumerable<string> vendorIds)
+    {
+        var prior = CountPriorOrdersPerVendor(customerId, vendorIds);   // same query as before
+        return prior.ToDictionary(
+            kv => kv.Key,
+            kv => kv.Value > 10 ? 20m : 0m);
+    }
 }
