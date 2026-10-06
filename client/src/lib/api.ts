@@ -1,4 +1,13 @@
-import { Api, ContentType, type HttpResponse, type RegisterRequestDto, type UserDto } from "@/generated/api";
+import {
+  Api,
+  type CategoryResponseDTO,
+  type HttpResponse,
+  type OrderResponseDTO,
+  type ProblemDetails,
+  type ProductResponseDTO,
+  type UserDto,
+} from "@/generated/api";
+import { getSession, setSession, type Session } from "./session";
 
 export const API_URL = envApiUrl() || "http://localhost:5120";
 
@@ -10,10 +19,47 @@ function envApiUrl(): string | undefined {
   }
 }
 
-const api = new Api({ baseUrl: API_URL });
+const api = new Api({
+  baseUrl: API_URL,
+  securityWorker: () => {
+    const session = getSession();
+    return session ? { headers: { Authorization: `Bearer ${session.token}` } } : {};
+  },
+});
 
-export type User = UserDto;
-export type Credentials = RegisterRequestDto;
+export interface Credentials {
+  username: string;
+  password: string;
+}
+
+export interface Category {
+  id: number;
+  name: string;
+}
+
+export interface ProductImage {
+  id: number;
+  isPrimary: boolean;
+  sortOrder: number;
+}
+
+export interface Product {
+  id: number;
+  title: string;
+  description: string;
+  price: number;
+  stock: number;
+  categoryId: number;
+  vendorId: string;
+  status: string;
+  isActive: boolean;
+  images: ProductImage[];
+}
+
+export interface OrderLine {
+  productId: number;
+  quantity: number;
+}
 
 export class ApiError extends Error {
   constructor(
@@ -34,29 +80,70 @@ async function call<T>(request: () => Promise<T>): Promise<T> {
   }
 }
 
-interface ProblemDetails {
-  title?: string;
-}
-
 function toApiError(res: HttpResponse<unknown, ProblemDetails | null>): ApiError {
+  const problem = res.error && typeof res.error === "object" ? res.error : null;
+
+  if (res.status === 401 && getSession()) {
+    setSession(null);
+    return new ApiError("Your session has expired. Sign in again.", 401);
+  }
+
   const message =
-    res.status === 404
-      ? "The requested resource was not found."
-      : res.status >= 500
-        ? "Something went wrong on the server."
-        : (res.error?.title ?? `Request failed (${res.status})`);
+    res.status >= 500
+      ? "Something went wrong on the server."
+      : (problem?.detail ??
+        (res.status === 404 ? "The requested resource was not found." : (problem?.title ?? `Request failed (${res.status})`)));
   return new ApiError(message, res.status);
 }
 
-export const register = (credentials: Credentials) => call(() => api.register.authRegister(credentials));
+function toUser(dto: UserDto | undefined, fallbackName: string): Session["user"] {
+  return { userId: dto?.userId ?? "", username: dto?.username ?? fallbackName, role: dto?.role ?? "User" };
+}
+
+function toCategory(dto: CategoryResponseDTO): Category {
+  return { id: dto.id ?? 0, name: dto.name ?? "" };
+}
+
+function toProduct(dto: ProductResponseDTO): Product {
+  return {
+    id: dto.id ?? 0,
+    title: dto.title ?? "",
+    description: dto.description ?? "",
+    price: dto.price ?? 0,
+    stock: dto.stock ?? 0,
+    categoryId: dto.categoryId ?? 0,
+    vendorId: dto.vendorId ?? "",
+    status: dto.status ?? "",
+    isActive: dto.isActive ?? true,
+    images: (dto.images ?? [])
+      .map(image => ({ id: image.id ?? 0, isPrimary: image.isPrimary ?? false, sortOrder: image.sortOrder ?? 0 }))
+      .sort((a, b) => a.sortOrder - b.sortOrder),
+  };
+}
+
+export const register = (credentials: Credentials) =>
+  call(() => api.register.authRegister(credentials)).then(dto => toUser(dto, credentials.username));
 
 export const login = (credentials: Credentials) =>
+  call(() => api.login.authLogin(credentials, { format: "json" }) as Promise<{ token: string; user: UserDto }>).then(
+    (res): Session => ({ token: res.token, user: toUser(res.user, credentials.username) }),
+  );
+
+export const getCategories = () => call(() => api.getCategories.categoryGetCategories()).then(list => list.map(toCategory));
+
+export const getProducts = () => call(() => api.getProducts.productGetProducts()).then(list => list.map(toProduct));
+
+export const getProduct = (id: number) => call(() => api.getProduct.productGetProduct({ id })).then(toProduct);
+
+export const searchProducts = (search: string, signal?: AbortSignal) =>
+  call(() => api.searchProducts.productSearchProducts({ search }, { signal })).then(list => list.map(toProduct));
+
+export const getImage = (imageId: number, signal?: AbortSignal) =>
+  call(() => api.getImage.productGetImage({ imageId }, { format: "blob", signal }));
+
+export const placeOrder = (lines: OrderLine[]): Promise<OrderResponseDTO> =>
   call(() =>
-    api.request<User>({
-      path: "/Login",
-      method: "POST",
-      body: credentials,
-      type: ContentType.Json,
-      format: "json",
+    api.placeOrder.orderPlaceOrder({
+      products: lines.map(line => ({ productid: line.productId, quantity: line.quantity })),
     }),
   );

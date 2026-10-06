@@ -44,12 +44,19 @@ readable error messages for the UI.
 
 ```
 src/
-  pages/AuthPage.tsx   Sign in / register on the front page (/)
-  components/ui.tsx    Form fields and buttons
-  components/Logo.tsx  Logo mark and wordmark
-  lib/api.ts           API calls (wraps the generated client)
-  generated/api.ts     Generated from Swagger, don't edit
-  index.css            Theme tokens (colours, fonts, animations)
+  pages/AuthPage.tsx         Sign in / register on the front page (/)
+  pages/MarketLayout.tsx     Signed-in shell for /market (navbar, data, auth guard)
+  pages/MarketPage.tsx       Featured, all listings, categories and search results
+  pages/ProductPage.tsx      Listing details and ordering (/market/product/:id)
+  components/market/         Navbar, search, cards, photos and shared market data
+  components/ui.tsx          Form fields and buttons
+  components/icons.tsx       Small inline icons
+  components/Logo.tsx        Logo mark and wordmark
+  lib/api.ts                 API calls (wraps the generated client)
+  lib/session.ts             Signed-in user and token (localStorage)
+  lib/format.ts              Prices, sorting and the featured selection
+  generated/api.ts           Generated from Swagger, don't edit
+  index.css                  Theme tokens (colours, fonts, animations)
 ```
 
 Theme colours live in the `@theme` block in `src/index.css`; use them as

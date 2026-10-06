@@ -5,7 +5,7 @@ import { Field } from "@base-ui/react/field";
 const inputClass =
   "h-11 w-full rounded-lg border border-line bg-field px-3.5 text-[15px] text-fg caret-accent outline-none any-pointer-coarse:text-base transition-[border-color,box-shadow] placeholder:text-faint hover:border-line-strong focus:border-accent/60 focus:ring-3 focus:ring-accent/10 group-data-invalid:focus:border-line-strong group-data-invalid:focus:ring-danger/10";
 
-const threadClass = "pointer-events-none absolute inset-0 rounded-lg border-b-2";
+export const threadClass = "pointer-events-none absolute inset-0 rounded-lg border-b-2";
 
 interface TextFieldProps {
   name: string;
