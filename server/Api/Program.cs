@@ -1,16 +1,20 @@
 using DefaultNamespace;
 using Api;
+using Api.Seeding;
 using Service;
 using Infrastructure;
 using Infrastructure.Entities;
 using LinqToDB;
 using System.IdentityModel.Tokens.Jwt;
+using System.Globalization;
 using System.Text;
 using LinqToDB.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using NSwag;
 using NSwag.Generation.Processors.Security;
+
+CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -160,6 +164,15 @@ using (var scope = app.Services.CreateScope())
                         FOREIGN KEY ([ProductId]) REFERENCES [Product]([Id])
                     );
                     """);
+
+    if (app.Environment.IsDevelopment() && app.Configuration.GetValue("Seed:Enabled", true))
+    {
+        DatabaseSeeder.Seed(
+            productDb,
+            scope.ServiceProvider.GetRequiredService<IPasswordHasher>(),
+            Path.Combine(AppContext.BaseDirectory, "SeedData"),
+            app.Logger);
+    }
 }
 
 app.UseCors(config => config

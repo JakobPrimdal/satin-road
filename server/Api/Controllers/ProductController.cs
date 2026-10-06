@@ -74,7 +74,7 @@ public class ProductController(ProductService service) : ControllerBase
     [HttpGet(nameof(GetImage))]
     public IActionResult GetImage(int imageId)
     {
-        var image = service.GetImageData(imageId);
+        var image = service.GetImageData(imageId, User.GetUserId(), User.IsAdmin());
 
         var contentTypeProvider = new FileExtensionContentTypeProvider();
         if (!contentTypeProvider.TryGetContentType("file" + image.Extension, out var contentType))
