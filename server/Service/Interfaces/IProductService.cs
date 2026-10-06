@@ -7,7 +7,9 @@ public interface IProductService
     public List<ProductResponseDTO> GetProducts(string callerId);
 
     public List<ProductResponseDTO> GetMyProducts(string callerId);
-
+    
+    public List<ProductResponseDTO> GetAllProducts();
+    
     public List<ProductResponseDTO> GetPendingProducts();
 
     public ProductResponseDTO GetProduct(int id, string callerId, bool isAdmin);
@@ -27,4 +29,8 @@ public interface IProductService
     public ProductImageDataDTO GetImageData(int imageId, string callerId, bool isAdmin);
 
     public void DeleteImage(int imageId, string callerId, bool isAdmin);
+    
+    public ProductResponseDTO SetProductActive(int id, bool isActive, string callerId, bool isAdmin);
+
+    public ProductResponseDTO UpdateStock(int id, int stock, string callerId, bool isAdmin);
 }
