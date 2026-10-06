@@ -63,6 +63,7 @@ export interface OrderLine {
 
 export interface Order {
   id: number;
+  customerId: string;
   purchasedAt: Date;
   items: { productId: number; title: string; quantity: number; vendorId: string }[];
 }
@@ -163,6 +164,7 @@ function parseUtc(value: string | undefined): Date {
 function toOrder(dto: OrderResponseDTO): Order {
   return {
     id: dto.id ?? 0,
+    customerId: dto.customerId ?? "",
     purchasedAt: parseUtc(dto.purchasedAtUtc),
     items: (dto.products ?? []).map(item => ({
       productId: item.productId ?? 0,
@@ -200,7 +202,7 @@ export const createProduct = (input: ListingInput) =>
 export const updateProduct = (id: number, input: ListingInput) =>
   call(() => api.updateProduct.productUpdateProduct(toForm(input), { id })).then(toProduct);
 
-export const deleteProduct = (id: number) => call(() => api.deleteProduct.productDeleteProduct({ id }));
+export const deleteProduct = (id: number) => call(() => api.deleteProduct.productDeleteProduct({ id }, { format: "json" }));
 
 export const uploadImages = (productId: number, files: File[]) => {
   const form = new FormData();
@@ -208,4 +210,20 @@ export const uploadImages = (productId: number, files: File[]) => {
   return call(() => api.uploadImages.productUploadImages(form as { files?: File[] }, { productId }));
 };
 
-export const deleteImage = (imageId: number) => call(() => api.deleteImage.productDeleteImage({ imageId }));
+export const deleteImage = (imageId: number) => call(() => api.deleteImage.productDeleteImage({ imageId }, { format: "json" }));
+
+export type ApprovalStatus = "Approved" | "Pending" | "Rejected";
+
+export const getPendingProducts = () =>
+  call(() => api.getPendingProducts.productGetPendingProducts()).then(list => list.map(toProduct));
+
+export const setProductApproval = (productId: number, status: ApprovalStatus) =>
+  call(() => api.setProductApproval.productSetProductApproval({ productId, status })).then(toProduct);
+
+export const createCategory = (name: string) =>
+  call(() => api.createCategory.categoryCreateCategory({ name })).then(toCategory);
+
+export const updateCategory = (id: number, name: string) =>
+  call(() => api.updateCategory.categoryUpdateCategory({ name }, { id })).then(toCategory);
+
+export const deleteCategory = (id: number) => call(() => api.deleteCategory.categoryDeleteCategory({ id }, { format: "json" }));

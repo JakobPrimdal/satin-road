@@ -322,9 +322,6 @@ function Photos({
           event.target.value = "";
         }}
       />
-      {product && product.status !== "Approved" && existing.length > 0 && (
-        <p className="text-[13px] text-faint">Photos of listings waiting for approval can't be shown until they're approved.</p>
-      )}
     </fieldset>
   );
 }

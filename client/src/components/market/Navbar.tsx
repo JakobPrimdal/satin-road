@@ -1,8 +1,8 @@
-import { useLayoutEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from "react-router";
 import { Menu } from "@base-ui/react/menu";
 import { BagIcon, ChevronDownIcon, PlusIcon, WalletIcon } from "@/components/icons";
 import { Wordmark } from "@/components/Logo";
+import { ThreadRail, type RailItem } from "@/components/ThreadRail";
 import { formatPrice, plural } from "@/lib/format";
 import { useCart, useWallet } from "@/lib/local";
 import { isAdmin, setSession, useSession } from "@/lib/session";
@@ -28,6 +28,7 @@ export function Navbar() {
 }
 
 function Actions() {
+  const session = useSession();
   const cart = useCart();
   const wallet = useWallet();
 
@@ -38,6 +39,14 @@ function Actions() {
         <span className="sr-only">Wallet balance</span>
         <span className="text-fg">{formatPrice(wallet.balance)}</span>
       </p>
+      {isAdmin(session) && (
+        <Link
+          to="/admin"
+          className="hidden h-10 items-center rounded-lg px-3 text-sm text-accent outline-none transition-colors hover:bg-field focus-visible:ring-2 focus-visible:ring-accent/40 md:flex"
+        >
+          Admin
+        </Link>
+      )}
       <NavLink
         to="/market/listings/new"
         className="hidden h-10 items-center gap-1.5 rounded-lg border border-line-strong px-3.5 text-sm text-fg outline-none transition-colors hover:bg-field focus-visible:ring-2 focus-visible:ring-accent/40 aria-[current=page]:bg-field md:flex"
@@ -63,7 +72,7 @@ function Actions() {
   );
 }
 
-function AccountMenu() {
+export function AccountMenu() {
   const session = useSession();
   const navigate = useNavigate();
   const wallet = useWallet();
@@ -99,6 +108,14 @@ function AccountMenu() {
               </div>
             </div>
             <Menu.Separator className="mx-1 my-1 h-px bg-line" />
+            {isAdmin(session) && (
+              <Menu.LinkItem render={<Link to="/admin" />} className={adminItemClass}>
+                Admin dashboard
+              </Menu.LinkItem>
+            )}
+            <Menu.LinkItem render={<Link to="/market" />} className={menuItemClass}>
+              Market
+            </Menu.LinkItem>
             <Menu.LinkItem render={<Link to="/market/orders" />} className={menuItemClass}>
               Orders
             </Menu.LinkItem>
@@ -119,15 +136,14 @@ function AccountMenu() {
   );
 }
 
-const menuItemClass =
-  "flex cursor-default rounded-md px-2.5 py-2 text-sm text-muted outline-none select-none data-highlighted:bg-field data-highlighted:text-fg";
+const itemBase = "flex cursor-default rounded-md px-2.5 py-2 text-sm outline-none select-none data-highlighted:bg-field";
+const menuItemClass = `${itemBase} text-muted data-highlighted:text-fg`;
+const adminItemClass = `${itemBase} text-accent`;
 
 function CategoryRail() {
   const { categories } = useMarket();
   const location = useLocation();
   const [params] = useSearchParams();
-  const railRef = useRef<HTMLDivElement>(null);
-  const [thread, setThread] = useState<{ left: number; width: number } | null>(null);
 
   const onListings = location.pathname === "/market";
   const active = onListings && !params.get("vendor") ? (params.get("category") ?? "all") : null;
@@ -141,45 +157,10 @@ function CategoryRail() {
     return `/market${search ? `?${search}` : ""}`;
   }
 
-  useLayoutEffect(() => {
-    const rail = railRef.current;
-    const label = rail?.querySelector<HTMLElement>("[aria-current='page'] > span");
-    if (!rail || !label) {
-      setThread(null);
-      return;
-    }
-    const measure = () => setThread({ left: label.offsetLeft, width: label.offsetWidth });
-    measure();
-    const visibleLeft = label.offsetLeft - rail.scrollLeft;
-    if (visibleLeft < 0 || visibleLeft + label.offsetWidth > rail.clientWidth) {
-      rail.scrollTo({ left: label.offsetLeft - 24, behavior: "smooth" });
-    }
-    const observer = new ResizeObserver(measure);
-    observer.observe(rail);
-    return () => observer.disconnect();
-  }, [active, categories]);
+  const items: RailItem[] = [
+    { key: "all", to: hrefFor(null), label: "All listings", active: active === "all" },
+    ...categories.map(c => ({ key: String(c.id), to: hrefFor(c.id), label: c.name, active: active === String(c.id) })),
+  ];
 
-  const items = [{ id: null, key: "all", name: "All listings" }, ...categories.map(c => ({ id: c.id, key: String(c.id), name: c.name }))];
-
-  return (
-    <nav aria-label="Categories" className="mx-auto max-w-7xl px-4 sm:px-6">
-      <div ref={railRef} className="no-scrollbar relative -mx-1 flex overflow-x-auto px-1">
-        {items.map(item => (
-          <Link
-            key={item.key}
-            to={hrefFor(item.id)}
-            aria-current={active === item.key ? "page" : undefined}
-            className="shrink-0 px-3 py-3 text-sm whitespace-nowrap text-muted outline-none transition-colors first:pl-0 hover:text-fg focus-visible:text-fg focus-visible:underline focus-visible:underline-offset-4 aria-[current=page]:text-fg"
-          >
-            <span>{item.name}</span>
-          </Link>
-        ))}
-        <span
-          aria-hidden="true"
-          className={`pointer-events-none absolute bottom-0 left-0 h-0.5 rounded-full bg-accent transition-[translate,width,opacity] duration-300 ease-out ${thread ? "opacity-100" : "opacity-0"}`}
-          style={thread ? { width: thread.width, translate: `${thread.left}px 0` } : undefined}
-        />
-      </div>
-    </nav>
-  );
+  return <ThreadRail label="Categories" items={items} />;
 }

@@ -137,11 +137,6 @@ function ListingRow({
     <li className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-4 gap-y-3 py-5 sm:grid-cols-[5rem_minmax(0,1fr)_8rem_auto] sm:items-center">
       <div className="relative row-span-2 sm:row-span-1">
         <ProductPhoto imageId={primaryImage(product)?.id} alt={product.title} className="aspect-square rounded-md" />
-        {product.status !== "Approved" && product.images.length > 0 && (
-          <span className="absolute inset-x-1 bottom-1 rounded bg-canvas/85 px-1 py-0.5 text-center text-[10px] leading-tight text-muted">
-            Shown after approval
-          </span>
-        )}
       </div>
 
       <div className="min-w-0">

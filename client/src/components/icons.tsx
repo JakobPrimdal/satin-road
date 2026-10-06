@@ -94,3 +94,12 @@ export function WalletIcon(props: IconProps) {
     </Icon>
   );
 }
+
+export function RefreshIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M13 8a5 5 0 1 1-1.46-3.54" />
+      <path d="M13 2.5v3h-3" />
+    </Icon>
+  );
+}

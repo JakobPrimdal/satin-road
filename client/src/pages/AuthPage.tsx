@@ -5,7 +5,7 @@ import { Tabs } from "@base-ui/react/tabs";
 import { Wordmark } from "@/components/Logo";
 import { PasswordField, SubmitButton, TextField, type Notice } from "@/components/ui";
 import { ApiError, login, register } from "@/lib/api";
-import { setSession, useSession } from "@/lib/session";
+import { isAdmin, setSession, useSession } from "@/lib/session";
 
 type Mode = "login" | "register";
 
@@ -25,7 +25,7 @@ export function AuthPage() {
   const mode: Mode = params.get("mode") === "register" ? "register" : "login";
   const session = useSession();
 
-  if (session) return <Navigate to="/market" replace />;
+  if (session) return <Navigate to={isAdmin(session) ? "/admin" : "/market"} replace />;
 
   return (
     <div className="flex min-h-screen flex-col px-6">

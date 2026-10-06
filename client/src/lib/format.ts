@@ -6,8 +6,8 @@ export function formatPrice(price: number): string {
   return `₿${btcFormat.format(price)}`;
 }
 
-export function plural(count: number, word: string): string {
-  return `${count} ${word}${count === 1 ? "" : "s"}`;
+export function plural(count: number, word: string, many = `${word}s`): string {
+  return `${count} ${count === 1 ? word : many}`;
 }
 
 export function stockLabel(stock: number): string {

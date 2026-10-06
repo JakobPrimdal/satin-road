@@ -157,7 +157,7 @@ public class ProductService: IProductService
     
     // Image CRUD
     
-    public ProductImageDataDTO GetImageData(int imageId)
+    public ProductImageDataDTO GetImageData(int imageId, string callerId, bool isAdmin)
     {
         var image = db.ProductImages().FirstOrDefault(i => i.Id == imageId);
 
@@ -165,7 +165,7 @@ public class ProductService: IProductService
             throw new NotFoundException("Image with id = " + imageId + " was not found.");
 
         var product = db.Products().FirstOrDefault(p => p.Id == image.ProductId);
-        if (product is null || product.Status != "Approved")
+        if (product is null || (product.Status != "Approved" && !isAdmin && product.VendorId != callerId))
             throw new NotFoundException("Image with id = " + imageId +
                                         " was not found - because it's belonging product was not found.");
         

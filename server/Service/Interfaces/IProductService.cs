@@ -24,7 +24,7 @@ public interface IProductService
 
     public List<ProductImageDTO> AddImages(int productId, List<ProductImageDataDTO> files, string callerId, bool isAdmin);
 
-    public ProductImageDataDTO GetImageData(int imageId);
+    public ProductImageDataDTO GetImageData(int imageId, string callerId, bool isAdmin);
 
     public void DeleteImage(int imageId, string callerId, bool isAdmin);
 }
