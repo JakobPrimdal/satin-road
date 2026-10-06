@@ -61,6 +61,20 @@ export interface OrderLine {
   quantity: number;
 }
 
+export interface Order {
+  id: number;
+  purchasedAt: Date;
+  items: { productId: number; title: string; quantity: number; vendorId: string }[];
+}
+
+export interface ListingInput {
+  title: string;
+  description: string;
+  price: number;
+  stock: number;
+  categoryId: number;
+}
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -141,9 +155,57 @@ export const searchProducts = (search: string, signal?: AbortSignal) =>
 export const getImage = (imageId: number, signal?: AbortSignal) =>
   call(() => api.getImage.productGetImage({ imageId }, { format: "blob", signal }));
 
-export const placeOrder = (lines: OrderLine[]): Promise<OrderResponseDTO> =>
+function parseUtc(value: string | undefined): Date {
+  if (!value) return new Date(0);
+  return new Date(/(z|[+-]\d\d:?\d\d)$/i.test(value) ? value : `${value}Z`);
+}
+
+function toOrder(dto: OrderResponseDTO): Order {
+  return {
+    id: dto.id ?? 0,
+    purchasedAt: parseUtc(dto.purchasedAtUtc),
+    items: (dto.products ?? []).map(item => ({
+      productId: item.productId ?? 0,
+      title: item.productTitle ?? "",
+      quantity: item.quantity ?? 0,
+      vendorId: item.vendorId ?? "",
+    })),
+  };
+}
+
+export const placeOrder = (lines: OrderLine[]) =>
   call(() =>
     api.placeOrder.orderPlaceOrder({
       products: lines.map(line => ({ productid: line.productId, quantity: line.quantity })),
     }),
-  );
+  ).then(toOrder);
+
+export const getOrders = () => call(() => api.getOrders.orderGetOrders()).then(list => list.map(toOrder));
+
+export const getMyProducts = () => call(() => api.getMyProducts.productGetMyProducts()).then(list => list.map(toProduct));
+
+function toForm(input: ListingInput) {
+  return {
+    Title: input.title,
+    Description: input.description,
+    Price: input.price,
+    Stock: input.stock,
+    CategoryId: input.categoryId,
+  };
+}
+
+export const createProduct = (input: ListingInput) =>
+  call(() => api.createProduct.productCreateProduct(toForm(input))).then(toProduct);
+
+export const updateProduct = (id: number, input: ListingInput) =>
+  call(() => api.updateProduct.productUpdateProduct(toForm(input), { id })).then(toProduct);
+
+export const deleteProduct = (id: number) => call(() => api.deleteProduct.productDeleteProduct({ id }));
+
+export const uploadImages = (productId: number, files: File[]) => {
+  const form = new FormData();
+  files.forEach(file => form.append("files", file));
+  return call(() => api.uploadImages.productUploadImages(form as { files?: File[] }, { productId }));
+};
+
+export const deleteImage = (imageId: number) => call(() => api.deleteImage.productDeleteImage({ imageId }));

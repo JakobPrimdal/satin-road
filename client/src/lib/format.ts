@@ -1,9 +1,9 @@
 import type { Product } from "./api";
 
-const priceFormat = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const btcFormat = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 8 });
 
 export function formatPrice(price: number): string {
-  return priceFormat.format(price);
+  return `₿${btcFormat.format(price)}`;
 }
 
 export function plural(count: number, word: string): string {
@@ -11,7 +11,15 @@ export function plural(count: number, word: string): string {
 }
 
 export function stockLabel(stock: number): string {
-  return stock > 0 ? `${stock} in stock` : "Sold out";
+  if (stock <= 0) return "Sold out";
+  if (stock <= 3) return `Only ${stock} left`;
+  return `${stock} in stock`;
+}
+
+export function stockTone(stock: number): string {
+  if (stock <= 0) return "text-danger";
+  if (stock <= 3) return "text-accent";
+  return "text-faint";
 }
 
 export function shortId(id: string): string {

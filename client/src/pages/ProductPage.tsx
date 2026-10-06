@@ -1,12 +1,15 @@
-import { useEffect, useId, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router";
-import { NumberField } from "@base-ui/react/number-field";
-import { ChevronLeftIcon, MinusIcon, PlusIcon } from "@/components/icons";
+import { ChevronRightIcon } from "@/components/icons";
 import { useMarket } from "@/components/market/MarketData";
+import { ProductCard } from "@/components/market/ProductCard";
 import { ProductPhoto } from "@/components/market/ProductPhoto";
+import { QuantityField } from "@/components/market/QuantityField";
+import { VendorMark } from "@/components/market/VendorMark";
 import { SubmitButton, threadClass, type Notice } from "@/components/ui";
-import { ApiError, getProduct, placeOrder, type Product } from "@/lib/api";
-import { formatPrice, shortId, stockLabel } from "@/lib/format";
+import { getProduct, type Product } from "@/lib/api";
+import { formatPrice, plural, shortId, sortProducts, stockLabel } from "@/lib/format";
+import { useCart } from "@/lib/local";
 import { useSession } from "@/lib/session";
 
 type Lookup = { status: "idle" | "loading" | "missing"; product: Product | null };
@@ -44,17 +47,23 @@ export function ProductPage() {
   }
   if (!product) return <ProductSkeleton />;
 
-  return <ProductView product={product} />;
+  return <ProductView key={product.id} product={product} />;
 }
 
 function ProductView({ product }: { product: Product }) {
-  const { categoryName } = useMarket();
+  const { categoryName, products } = useMarket();
   const category = categoryName(product.categoryId);
+  const fromVendor = products.filter(p => p.vendorId === product.vendorId);
+  const otherFromVendor = fromVendor.filter(p => p.id !== product.id);
+  const sameCategory = products.filter(p => p.categoryId === product.categoryId && p.id !== product.id);
+  const showVendor = otherFromVendor.length >= 2;
+  const related = sortProducts(showVendor ? otherFromVendor : sameCategory, "newest").slice(0, 4);
+  const stockClass = product.stock <= 0 ? "text-danger" : product.stock <= 3 ? "text-accent" : "text-muted";
 
   return (
     <article>
       <title>{`${product.title} - Satin Road`}</title>
-      <BackLink categoryId={product.categoryId} categoryName={category} />
+      <Breadcrumbs categoryId={product.categoryId} categoryName={category} current={product.title} />
 
       <div className="mt-6 grid gap-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-16">
         <Gallery product={product} />
@@ -62,7 +71,7 @@ function ProductView({ product }: { product: Product }) {
         <div className="flex flex-col">
           <h1 className="text-[2rem] leading-tight font-medium tracking-tight text-balance">{product.title}</h1>
           <p className="mt-3 text-2xl tracking-tight">{formatPrice(product.price)}</p>
-          <p className={`mt-1 text-[15px] ${product.stock > 0 ? "text-muted" : "text-danger"}`}>{stockLabel(product.stock)}</p>
+          <p className={`mt-1 text-[15px] ${stockClass}`}>{stockLabel(product.stock)}</p>
 
           <div className="mt-8">
             <Purchase product={product} />
@@ -75,25 +84,89 @@ function ProductView({ product }: { product: Product }) {
             ) : (
               <p className="text-[15px] text-faint">The vendor didn't add a description.</p>
             )}
-            <p className="mt-8 text-[13px] text-faint">
-              Sold by vendor <span className="font-mono text-muted">{shortId(product.vendorId)}</span>
-            </p>
           </div>
+
+          <VendorCard vendorId={product.vendorId} listingCount={fromVendor.length} />
         </div>
       </div>
+
+      {related.length > 0 && (
+        <section aria-labelledby="related-heading" className="mt-24">
+          <div className="mb-8 flex flex-wrap items-baseline justify-between gap-4">
+            <h2 id="related-heading" className="text-[1.75rem] leading-tight font-medium tracking-tight">
+              {showVendor ? "More from this vendor" : `More in ${category ?? "this category"}`}
+            </h2>
+            <Link
+              to={showVendor ? `/market?vendor=${product.vendorId}` : `/market?category=${product.categoryId}`}
+              className="text-[15px] text-accent underline-offset-4 outline-none hover:underline focus-visible:underline"
+            >
+              See all
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
+            {related.map(item => (
+              <ProductCard key={item.id} product={item} />
+            ))}
+          </div>
+        </section>
+      )}
     </article>
   );
 }
 
-function BackLink({ categoryId, categoryName }: { categoryId: number; categoryName?: string }) {
+function VendorCard({ vendorId, listingCount }: { vendorId: string; listingCount: number }) {
   return (
     <Link
-      to={categoryName ? `/market?category=${categoryId}` : "/market"}
-      className="inline-flex items-center gap-1 rounded text-[13px] text-muted outline-none transition-colors hover:text-fg focus-visible:text-fg focus-visible:underline focus-visible:underline-offset-4"
+      to={`/market?vendor=${vendorId}`}
+      className="group/vendor relative mt-8 flex items-center gap-4 rounded-lg border border-line bg-surface p-4 outline-none transition-colors hover:border-line-strong focus-visible:border-accent/60"
     >
-      <ChevronLeftIcon className="size-4" />
-      {categoryName ?? "All listings"}
+      <VendorMark vendorId={vendorId} className="size-11" />
+      <span className="min-w-0 flex-1">
+        <span className="block text-[13px] text-muted">Sold by</span>
+        <span className="block text-[15px] text-fg">
+          Vendor <span className="font-mono">{shortId(vendorId)}</span>
+        </span>
+      </span>
+      <span className="shrink-0 text-[13px] text-muted transition-colors group-hover/vendor:text-fg">
+        {listingCount > 0 ? plural(listingCount, "listing") : "No other listings"}
+      </span>
+      <span
+        aria-hidden="true"
+        className={`${threadClass} border-accent [clip-path:inset(0_100%_0_0)] transition-[clip-path] duration-300 ease-out group-hover/vendor:[clip-path:inset(0)] group-focus-visible/vendor:[clip-path:inset(0)]`}
+      />
     </Link>
+  );
+}
+
+function Breadcrumbs({ categoryId, categoryName, current }: { categoryId: number; categoryName?: string; current?: string }) {
+  const crumb = "rounded text-muted outline-none transition-colors hover:text-fg focus-visible:text-fg focus-visible:underline focus-visible:underline-offset-4";
+
+  return (
+    <nav aria-label="Breadcrumb">
+      <ol className="flex min-w-0 items-center gap-1.5 text-[13px]">
+        <li>
+          <Link to="/market" className={crumb}>
+            Market
+          </Link>
+        </li>
+        {categoryName && (
+          <li className="flex items-center gap-1.5">
+            <ChevronRightIcon className="size-3.5 text-faint" />
+            <Link to={`/market?category=${categoryId}`} className={crumb}>
+              {categoryName}
+            </Link>
+          </li>
+        )}
+        {current && (
+          <li className="flex min-w-0 items-center gap-1.5">
+            <ChevronRightIcon className="size-3.5 shrink-0 text-faint" />
+            <span aria-current="page" className="truncate text-faint">
+              {current}
+            </span>
+          </li>
+        )}
+      </ol>
+    </nav>
   );
 }
 
@@ -144,11 +217,8 @@ function Gallery({ product }: { product: Product }) {
 
 function Purchase({ product }: { product: Product }) {
   const session = useSession();
-  const market = useMarket();
-  const quantityId = useId();
+  const cart = useCart();
   const [quantity, setQuantity] = useState(1);
-  const [ordered, setOrdered] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [showNotice, setShowNotice] = useState(false);
 
@@ -160,87 +230,73 @@ function Purchase({ product }: { product: Product }) {
     );
   }
   if (product.stock <= 0) {
-    return (
-      <p role="status" className="rounded-lg border border-line px-4 py-3 text-[15px] text-muted">
-        {ordered ? "Order placed. You bought the last one in stock." : "This listing is sold out."}
-      </p>
-    );
+    return <p className="rounded-lg border border-line px-4 py-3 text-[15px] text-muted">This listing is sold out.</p>;
   }
 
-  const amount = Math.min(Math.max(quantity, 1), product.stock);
+  const inCart = cart.quantityOf(product.id);
+  const available = product.stock - inCart;
+  const amount = Math.min(Math.max(quantity, 1), Math.max(available, 1));
 
-  async function submit(event: FormEvent) {
+  function submit(event: FormEvent) {
     event.preventDefault();
-    setShowNotice(false);
-    setBusy(true);
-    try {
-      await placeOrder([{ productId: product.id, quantity: amount }]);
-      setNotice({ tone: "success", text: "Order placed" });
-      setShowNotice(true);
-      setOrdered(true);
-      setQuantity(1);
-      await market.reload();
-    } catch (err) {
-      setNotice({ tone: "danger", text: err instanceof ApiError ? err.message : "Something went wrong." });
-      setShowNotice(true);
-    } finally {
-      setBusy(false);
-    }
+    if (available <= 0) return;
+    cart.add(product.id, amount);
+    setQuantity(1);
+    setNotice({ tone: "success", text: amount === 1 ? "Added to cart" : `Added ${amount} to cart` });
+    setShowNotice(true);
   }
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-4">
-      <div className="flex items-end justify-between gap-6">
-        <NumberField.Root
-          value={amount}
-          onValueChange={value => {
-            setQuantity(value ?? 1);
-            setShowNotice(false);
-          }}
-          id={quantityId}
-          min={1}
-          max={product.stock}
-          className="flex flex-col gap-1.5"
-        >
-          <label htmlFor={quantityId} className="text-[13px] text-muted">
-            Quantity
-          </label>
-          <NumberField.Group className="flex h-11 w-36 items-stretch rounded-lg border border-line bg-field transition-[border-color,box-shadow] focus-within:border-accent/60 focus-within:ring-3 focus-within:ring-accent/10 hover:border-line-strong">
-            <NumberField.Decrement className={stepperClass} aria-label="Decrease quantity">
-              <MinusIcon className="size-4" />
-            </NumberField.Decrement>
-            <NumberField.Input className="w-full min-w-0 bg-transparent text-center text-[15px] text-fg caret-accent outline-none any-pointer-coarse:text-base" />
-            <NumberField.Increment className={stepperClass} aria-label="Increase quantity">
-              <PlusIcon className="size-4" />
-            </NumberField.Increment>
-          </NumberField.Group>
-        </NumberField.Root>
-
-        <div className="text-right">
-          <p className="text-[13px] text-muted">Total</p>
-          <p className="mt-1.5 text-xl tracking-tight">{formatPrice(product.price * amount)}</p>
+      {available > 0 ? (
+        <div className="flex items-end justify-between gap-6">
+          <QuantityField
+            value={amount}
+            onChange={value => {
+              setQuantity(value);
+              setShowNotice(false);
+            }}
+            max={available}
+            label="Quantity"
+          />
+          <div className="text-right">
+            <p className="text-[13px] text-muted">Total</p>
+            <p className="mt-1.5 text-xl tracking-tight">{formatPrice(product.price * amount)}</p>
+          </div>
         </div>
-      </div>
+      ) : (
+        <p className="rounded-lg border border-line px-4 py-3 text-[15px] text-muted">
+          Every unit in stock is already in your cart.
+        </p>
+      )}
 
-      <SubmitButton
-        label="Place order"
-        busy={busy}
-        notice={notice}
-        showNotice={showNotice}
-        onNoticeDone={() => setShowNotice(false)}
-      />
+      {available > 0 && (
+        <SubmitButton
+          label="Add to cart"
+          busy={false}
+          notice={notice}
+          showNotice={showNotice}
+          onNoticeDone={() => setShowNotice(false)}
+        />
+      )}
+
+      {inCart > 0 && (
+        <p className="flex items-baseline justify-between gap-4 text-[15px] text-muted">
+          <span>{inCart} in your cart</span>
+          <Link to="/market/cart" className="text-accent underline-offset-4 outline-none hover:underline focus-visible:underline">
+            Go to cart
+          </Link>
+        </p>
+      )}
     </form>
   );
 }
-
-const stepperClass =
-  "grid w-11 shrink-0 place-items-center text-muted outline-none transition-colors hover:text-fg focus-visible:text-fg data-disabled:text-line-strong";
 
 function Unavailable({ title, body }: { title: string; body: string }) {
   return (
     <div>
       <title>Listing unavailable - Satin Road</title>
-      <BackLink categoryId={0} />
+      <Breadcrumbs categoryId={0} />
       <div className="mt-6 rounded-lg border border-line px-6 py-16 text-center">
         <p className="text-lg font-medium tracking-tight">{title}</p>
         <p className="mx-auto mt-2 max-w-md text-[15px] text-muted">{body}</p>
@@ -252,7 +308,7 @@ function Unavailable({ title, body }: { title: string; body: string }) {
 function ProductSkeleton() {
   return (
     <div aria-hidden="true">
-      <div className="h-4 w-24 rounded bg-surface" />
+      <div className="h-4 w-40 rounded bg-surface" />
       <div className="mt-6 grid gap-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-16">
         <div className="aspect-[4/3] rounded-lg bg-surface" />
         <div className="flex flex-col gap-4">

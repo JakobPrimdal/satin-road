@@ -4,9 +4,11 @@ import { useMarket } from "@/components/market/MarketData";
 import { ProductCard, ProductCardSkeleton } from "@/components/market/ProductCard";
 import { visibleResults } from "@/components/market/SearchBox";
 import { SortSelect } from "@/components/market/SortSelect";
-import { Button } from "@/components/ui";
+import { ProductPhoto } from "@/components/market/ProductPhoto";
+import { VendorMark } from "@/components/market/VendorMark";
+import { Button, threadClass } from "@/components/ui";
 import { ApiError, searchProducts, type Product } from "@/lib/api";
-import { pickFeatured, plural, sortProducts, toSortKey } from "@/lib/format";
+import { pickFeatured, plural, primaryImage, shortId, sortProducts, toSortKey } from "@/lib/format";
 import { useSession } from "@/lib/session";
 
 type SearchState = { status: "idle" | "loading" | "ready" | "error"; results: Product[]; error: string | null };
@@ -44,11 +46,22 @@ export function MarketPage() {
   const sort = toSortKey(params.get("sort"));
   const search = useSearch(query, session?.user.userId, attempt);
 
+  const vendorId = params.get("vendor");
+  const isHome = !query && !categoryId && !vendorId;
+
   const category = categoryId ? market.categories.find(c => c.id === categoryId) : undefined;
-  const source = query ? search.results : market.products;
-  const listings = sortProducts(categoryId ? source.filter(p => p.categoryId === categoryId) : source, sort);
   const featuredPool = pickFeatured(market.products);
-  const featured = !query && !categoryId ? featuredPool.slice(0, featuredPool.length >= 5 ? 5 : featuredPool.length >= 3 ? 3 : 0) : [];
+  const featured = isHome ? featuredPool.slice(0, featuredPool.length >= 5 ? 5 : featuredPool.length >= 3 ? 3 : 0) : [];
+  const featuredIds = new Set(featured.map(p => p.id));
+  const listings = sortProducts(
+    (query ? search.results : market.products).filter(
+      p =>
+        (!categoryId || p.categoryId === categoryId) &&
+        (!vendorId || p.vendorId === vendorId) &&
+        !featuredIds.has(p.id),
+    ),
+    sort,
+  );
 
   const loading = market.status === "loading" || (query !== "" && (search.status === "loading" || search.status === "idle"));
   const error = market.status === "error" ? market.error : query && search.status === "error" ? search.error : null;
@@ -61,34 +74,45 @@ export function MarketPage() {
     setParams(nextParams, { replace: true });
   }
 
-  const title = query ? `Results for “${query}”` : (category?.name ?? "All listings");
-  const pageTitle = query ? `${query} - Satin Road` : category ? `${category.name} - Satin Road` : "Market - Satin Road";
+  const vendorName = vendorId ? `Vendor ${shortId(vendorId)}` : null;
+  const title = query
+    ? `Results for “${query}”`
+    : (vendorName ?? category?.name ?? (featured.length > 0 ? "More listings" : "All listings"));
+  const pageTitle = query
+    ? `${query} - Satin Road`
+    : vendorName
+      ? `${vendorName} - Satin Road`
+      : category
+        ? `${category.name} - Satin Road`
+        : "Market - Satin Road";
+  const countLabel = [
+    plural(listings.length, featured.length > 0 ? "more listing" : "listing"),
+    (query || vendorId) && category ? `in ${category.name}` : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const Heading = isHome ? "h2" : "h1";
 
   return (
     <>
       <title>{pageTitle}</title>
-      {!query && !categoryId && <h1 className="sr-only">Market</h1>}
+      {isHome && <h1 className="sr-only">Market</h1>}
 
       {featured.length > 0 && <Featured products={featured} />}
+      {isHome && market.status === "ready" && <CategoryTiles />}
 
       <section aria-labelledby="listings-heading">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
-          <div className="min-w-0">
-            {query || categoryId ? (
-              <h1 id="listings-heading" className="text-[1.75rem] leading-tight font-medium tracking-tight">
+          <div className="flex min-w-0 items-center gap-4">
+            {vendorId && <VendorMark vendorId={vendorId} className="size-12" />}
+            <div className="min-w-0">
+              <Heading id="listings-heading" className="text-[1.75rem] leading-tight font-medium tracking-tight">
                 {title}
-              </h1>
-            ) : (
-              <h2 id="listings-heading" className="text-[1.75rem] leading-tight font-medium tracking-tight">
-                {title}
-              </h2>
-            )}
-            {!loading && !error && !unknownCategory && listings.length > 0 && (
-              <p className="mt-1.5 text-[15px] text-muted">
-                {plural(listings.length, "listing")}
-                {query && category && <> in {category.name}</>}
-              </p>
-            )}
+              </Heading>
+              {!loading && !error && !unknownCategory && listings.length > 0 && (
+                <p className="mt-1.5 text-[15px] text-muted">{countLabel}</p>
+              )}
+            </div>
           </div>
           {listings.length > 1 && !loading && <SortSelect value={sort} onChange={setSort} />}
         </div>
@@ -116,7 +140,12 @@ export function MarketPage() {
             <BrowseAll />
           </Message>
         ) : listings.length === 0 ? (
-          <EmptyListings query={query} categoryName={category?.name} hasAnyListings={market.products.length > 0} />
+          <EmptyListings
+            query={query}
+            categoryName={category?.name}
+            vendorName={vendorName}
+            hasAnyListings={market.products.length > 0}
+          />
         ) : (
           <ListingGrid>
             {listings.map(product => (
@@ -150,11 +179,69 @@ function Featured({ products }: { products: Product[] }) {
   );
 }
 
+function CategoryTiles() {
+  const { categories, products } = useMarket();
+  const tiles = categories
+    .map(category => {
+      const inCategory = products.filter(p => p.categoryId === category.id);
+      const cover = sortProducts(inCategory.filter(p => p.images.length > 0), "newest")[0];
+      return { category, count: inCategory.length, cover };
+    })
+    .filter(tile => tile.count > 0);
+
+  if (tiles.length < 2) return null;
+
+  return (
+    <section aria-labelledby="categories-heading" className="mb-20">
+      <h2 id="categories-heading" className="mb-8 text-[1.75rem] leading-tight font-medium tracking-tight">
+        Browse categories
+      </h2>
+      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {tiles.map(({ category, count, cover }) => (
+          <li key={category.id}>
+            <Link
+              to={`/market?category=${category.id}`}
+              className="group/tile relative flex items-center gap-4 rounded-lg border border-line bg-surface p-3 outline-none transition-colors hover:border-line-strong focus-visible:border-accent/60"
+            >
+              <ProductPhoto imageId={cover ? primaryImage(cover)?.id : undefined} alt="" className="size-14 shrink-0 rounded-md" />
+              <span className="min-w-0">
+                <span className="block truncate text-[15px] text-fg">{category.name}</span>
+                <span className="mt-0.5 block text-[13px] text-muted">{plural(count, "listing")}</span>
+              </span>
+              <span
+                aria-hidden="true"
+                className={`${threadClass} border-accent [clip-path:inset(0_100%_0_0)] transition-[clip-path] duration-300 ease-out group-hover/tile:[clip-path:inset(0)] group-focus-visible/tile:[clip-path:inset(0)]`}
+              />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function ListingGrid({ children }: { children: ReactNode }) {
   return <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">{children}</div>;
 }
 
-function EmptyListings({ query, categoryName, hasAnyListings }: { query: string; categoryName?: string; hasAnyListings: boolean }) {
+function EmptyListings({
+  query,
+  categoryName,
+  vendorName,
+  hasAnyListings,
+}: {
+  query: string;
+  categoryName?: string;
+  vendorName: string | null;
+  hasAnyListings: boolean;
+}) {
+  if (vendorName && !query) {
+    return (
+      <Message title={`${vendorName} has nothing for sale right now.`} body="Their listings show up here once they're approved and in stock.">
+        {hasAnyListings && <BrowseAll />}
+      </Message>
+    );
+  }
   if (query) {
     return (
       <Message

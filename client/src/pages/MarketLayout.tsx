@@ -1,10 +1,17 @@
-import { Navigate, Outlet } from "react-router";
+import { useEffect } from "react";
+import { Navigate, Outlet, useLocation } from "react-router";
 import { MarketDataProvider } from "@/components/market/MarketData";
 import { Navbar } from "@/components/market/Navbar";
 import { useSession } from "@/lib/session";
 
 export function MarketLayout() {
   const session = useSession();
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
   if (!session) return <Navigate to="/" replace />;
 
   return (

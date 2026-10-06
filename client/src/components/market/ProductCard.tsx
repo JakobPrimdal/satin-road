@@ -1,12 +1,15 @@
 import { Link } from "react-router";
 import { threadClass } from "@/components/ui";
 import type { Product } from "@/lib/api";
-import { formatPrice, primaryImage, stockLabel } from "@/lib/format";
+import { formatPrice, primaryImage, stockLabel, stockTone } from "@/lib/format";
+import { useCart } from "@/lib/local";
 import { useMarket } from "./MarketData";
 import { ProductPhoto } from "./ProductPhoto";
 
 export function ProductCard({ product, lead = false }: { product: Product; lead?: boolean }) {
   const { categoryName } = useMarket();
+  const cart = useCart();
+  const inCart = cart.quantityOf(product.id);
   const image = primaryImage(product);
   const soldOut = product.stock <= 0;
 
@@ -22,6 +25,11 @@ export function ProductCard({ product, lead = false }: { product: Product; lead?
           className={`rounded-lg ${lead ? "aspect-[4/3] h-full sm:aspect-[16/9] lg:aspect-auto lg:min-h-[22rem]" : "aspect-[4/3]"} ${soldOut ? "opacity-60" : ""}`}
         />
         <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-lg ring-1 ring-inset ring-white/5" />
+        {inCart > 0 && (
+          <span className="absolute top-2.5 left-2.5 rounded-md bg-canvas/85 px-2 py-1 text-[12px] text-accent">
+            {inCart} in cart
+          </span>
+        )}
         <span
           aria-hidden="true"
           className={`${threadClass} border-accent [clip-path:inset(0_100%_0_0)] transition-[clip-path] duration-300 ease-out group-hover/card:[clip-path:inset(0)] group-focus-visible/card:[clip-path:inset(0)]`}
@@ -44,7 +52,7 @@ export function ProductCard({ product, lead = false }: { product: Product; lead?
         )}
         <div className="flex items-baseline justify-between gap-4 text-[13px]">
           <span className="truncate text-muted">{categoryName(product.categoryId) ?? "Uncategorized"}</span>
-          <span className={`shrink-0 ${soldOut ? "text-danger" : "text-faint"}`}>{stockLabel(product.stock)}</span>
+          <span className={`shrink-0 ${stockTone(product.stock)}`}>{stockLabel(product.stock)}</span>
         </div>
       </div>
     </Link>

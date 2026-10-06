@@ -14,6 +14,9 @@ interface TextFieldProps {
   validate?: ComponentProps<typeof Field.Root>["validate"];
   type?: string;
   autoComplete?: string;
+  defaultValue?: string;
+  placeholder?: string;
+  inputMode?: "text" | "decimal" | "numeric";
 }
 
 function FieldFrame({ name, label, hint, validate, children }: TextFieldProps & { children: ReactNode }) {
@@ -38,16 +41,34 @@ function FieldFrame({ name, label, hint, validate, children }: TextFieldProps & 
   );
 }
 
-export function TextField({ type = "text", autoComplete, ...props }: TextFieldProps) {
+export function TextField({ type = "text", autoComplete, defaultValue, placeholder, inputMode, ...props }: TextFieldProps) {
   return (
     <FieldFrame {...props}>
       <Field.Control
         type={type}
+        defaultValue={defaultValue}
+        placeholder={placeholder}
+        inputMode={inputMode}
         autoComplete={autoComplete}
         autoCapitalize="none"
         autoCorrect="off"
         spellCheck={false}
         className={inputClass}
+      />
+    </FieldFrame>
+  );
+}
+
+export function TextAreaField({ defaultValue, maxLength, ...props }: TextFieldProps & { maxLength: number }) {
+  const [length, setLength] = useState(defaultValue?.length ?? 0);
+
+  return (
+    <FieldFrame {...props} hint={`${length} / ${maxLength}`}>
+      <Field.Control
+        render={<textarea rows={6} />}
+        defaultValue={defaultValue}
+        onChange={event => setLength(event.target.value.length)}
+        className={`${inputClass} h-auto min-h-36 resize-y py-3 leading-relaxed`}
       />
     </FieldFrame>
   );

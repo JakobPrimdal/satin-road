@@ -67,3 +67,30 @@ export function MinusIcon(props: IconProps) {
     </Icon>
   );
 }
+
+export function BagIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M3.5 5.5h9l-.75 8h-7.5z" />
+      <path d="M6 5.5V4.5a2 2 0 0 1 4 0v1" />
+    </Icon>
+  );
+}
+
+export function ChevronRightIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="m6.5 4 4 4-4 4" />
+    </Icon>
+  );
+}
+
+export function WalletIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M2.5 5.5a1.5 1.5 0 0 1 1.5-1.5h7.5v2" />
+      <path d="M2.5 5.5v6A1.5 1.5 0 0 0 4 13h8.5a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H4a1.5 1.5 0 0 1-1.5-1.5Z" />
+      <circle cx="11" cy="9.5" r=".6" fill="currentColor" stroke="none" />
+    </Icon>
+  );
+}

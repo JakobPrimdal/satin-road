@@ -18,4 +18,10 @@
     <ProjectReference Include="..\Service\Service.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Remove="SeedData\**" />
+    <None Remove="SeedData\**" />
+    <None Include="SeedData\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
