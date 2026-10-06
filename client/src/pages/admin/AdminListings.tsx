@@ -105,7 +105,7 @@ function ListingRow({ product, orderCount }: { product: Product; orderCount: num
     setDeleteError(null);
     try {
       await deleteProduct(product.id);
-      admin.dropListing(product.id);
+      admin.patchListing(product.id, { isActive: false })
     } catch (err) {
       setDeleteError(err instanceof ApiError ? err.message : "Something went wrong.");
       setDeleting(false);

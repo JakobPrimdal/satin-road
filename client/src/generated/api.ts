@@ -654,6 +654,24 @@ export class Api<
         ...params,
       }),
   };
+  getAllProducts = {
+    /**
+     * No description
+     *
+     * @tags Product
+     * @name ProductGetAllProducts
+     * @request GET:/GetAllProducts
+     * @secure
+     */
+    productGetAllProducts: (params: RequestParams = {}) =>
+      this.request<ProductResponseDTO[], any>({
+        path: `/GetAllProducts`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+  };
   getPendingProducts = {
     /**
      * No description
@@ -740,7 +758,6 @@ export class Api<
         Stock?: number;
         /** @format int32 */
         CategoryId?: number;
-        VendorId?: string | null;
       },
       params: RequestParams = {},
     ) =>
@@ -773,7 +790,6 @@ export class Api<
         Stock?: number;
         /** @format int32 */
         CategoryId?: number;
-        VendorId?: string | null;
       },
       query?: {
         /** @format int32 */
@@ -788,6 +804,59 @@ export class Api<
         body: data,
         secure: true,
         type: ContentType.FormData,
+        format: "json",
+        ...params,
+      }),
+  };
+  setProductActive = {
+    /**
+     * No description
+     *
+     * @tags Product
+     * @name ProductSetProductActive
+     * @request PUT:/SetProductActive
+     * @secure
+     */
+    productSetProductActive: (
+      query?: {
+        /** @format int32 */
+        id?: number;
+        isActive?: boolean;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<ProductResponseDTO, any>({
+        path: `/SetProductActive`,
+        method: "PUT",
+        query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+  };
+  updateStock = {
+    /**
+     * No description
+     *
+     * @tags Product
+     * @name ProductUpdateStock
+     * @request PUT:/UpdateStock
+     * @secure
+     */
+    productUpdateStock: (
+      query?: {
+        /** @format int32 */
+        id?: number;
+        /** @format int32 */
+        stock?: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<ProductResponseDTO, any>({
+        path: `/UpdateStock`,
+        method: "PUT",
+        query: query,
+        secure: true,
         format: "json",
         ...params,
       }),

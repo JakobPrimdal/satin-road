@@ -149,6 +149,8 @@ public class ProductService: IProductService
         return ToDto(db.Products().FirstOrDefault(p => p.Id == productId)!);
     }
 
+    // Soft delete- hides the listing from the vendor's list and the market,
+// but keeps the row so order history still points to it
     public void DeleteProduct(int id, string callerId, bool isAdmin)
     {
         SetProductActive(id, false, callerId, isAdmin);
@@ -162,7 +164,7 @@ public class ProductService: IProductService
 
         if (!isAdmin && product.VendorId != callerId)
             throw new ForbiddenException("You do not have permission to modify this product.");
-        
+
         db.Products()
             .Where(p => p.Id == id)
             .Set(p => p.IsActive, isActive)
