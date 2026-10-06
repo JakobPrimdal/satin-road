@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   ApiError,
+  getAllProducts,
   getCategories,
   getMyProducts,
   getOrders,
@@ -40,15 +41,16 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const reload = useCallback(async () => {
     setRefreshing(true);
     try {
-      const [nextCategories, live, pending, mine, nextOrders] = await Promise.all([
+      const [nextCategories, live, pending, mine, all, nextOrders] = await Promise.all([
         getCategories(),
         getProducts(),
         getPendingProducts(),
         getMyProducts(),
+        getAllProducts(),
         getOrders(),
       ]);
       const byId = new Map<number, Product>();
-      [...live, ...pending, ...mine].forEach(product => byId.set(product.id, product));
+      [...live, ...pending, ...mine, ...all].forEach(product => byId.set(product.id, product));
       setCategoriesState(nextCategories);
       setListings([...byId.values()].sort((a, b) => b.id - a.id));
       setOrders(nextOrders.sort((a, b) => b.id - a.id));

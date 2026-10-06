@@ -57,7 +57,7 @@ public class OrderService : IOrderService
         foreach (var requestProduct in dto.Products)
         {
             var product = productDb.Products()
-                .FirstOrDefault(p => p.Id == requestProduct.Productid && p.Status == "Approved");
+                .FirstOrDefault(p => p.Id == requestProduct.Productid && p.Status == "Approved"  && p.IsActive);//vendor must still see their inactive listings
 
             if (product is null)
                 throw new NotFoundException("Product with id = " + requestProduct.Productid + " was not found.");

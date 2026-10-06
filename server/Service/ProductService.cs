@@ -21,7 +21,7 @@ public class ProductService: IProductService
     {
         return db.Products()
             .LoadWith(p => p.Images)
-            .Where(p => p.Status == "Approved" && p.VendorId != callerId)
+            .Where(p => p.Status == ProductStatus.Approved && p.IsActive && p.VendorId != callerId)
             .ToList()
             .Select(ToDto)
             .ToList();
@@ -31,7 +31,15 @@ public class ProductService: IProductService
     {
         return db.Products()
             .LoadWith(p => p.Images)
-            .Where(p => p.VendorId == callerId)
+            .Where(p => p.VendorId == callerId && !p.IsDeleted)
+            .ToList()
+            .Select(ToDto)
+            .ToList();
+    }
+    public List<ProductResponseDTO> GetAllProducts()
+    {
+        return db.Products()
+            .LoadWith(p => p.Images)
             .ToList()
             .Select(ToDto)
             .ToList();
@@ -41,7 +49,7 @@ public class ProductService: IProductService
     {
         return db.Products()
             .LoadWith(p => p.Images)
-            .Where(p => p.Status == "Pending")
+            .Where(p => p.Status == ProductStatus.Pending && p.IsActive)
             .ToList()
             .Select(ToDto)
             .ToList();
@@ -69,8 +77,8 @@ public class ProductService: IProductService
 
         List<Product> matches = db.Products()
             .LoadWith(p => p.Images)
-            .Where(p => p.Status == "Approved" && p.VendorId != callerId 
-                                               && p.Title.Contains(search) || p.Description.Contains(search))
+            .Where(p => p.Status == ProductStatus.Approved && p.IsActive && p.VendorId != callerId
+                        && (p.Title.Contains(search) || p.Description.Contains(search)))
             .ToList();
 
         return matches.Select(ToDto).ToList();
@@ -90,7 +98,7 @@ public class ProductService: IProductService
             CategoryId = dto.CategoryId,
             VendorId = vendorId,
             Status = isAdmin ? ProductStatus.Approved : ProductStatus.Pending,
-            IsActive = true,
+            IsActive = true,  
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow
         };
@@ -141,19 +149,42 @@ public class ProductService: IProductService
         return ToDto(db.Products().FirstOrDefault(p => p.Id == productId)!);
     }
 
+    // Soft delete- hides the listing from the vendor's list and the market,
+// but keeps the row so order history still points to it
     public void DeleteProduct(int id, string callerId, bool isAdmin)
     {
-        Product? product = db.Products().FirstOrDefault(p => p.Id == id);
+        Product? product = db.Products().FirstOrDefault(p => p.Id == id && !p.IsDeleted);
         if (product is null)
             throw new NotFoundException("Product with id = " + id + " was not found.");
 
         if (!isAdmin && product.VendorId != callerId)
             throw new ForbiddenException("You do not have permission to modify this product.");
 
-        db.ProductImages().Where(i => i.ProductId == id).Delete();
-        db.Products().Where(p => p.Id == id).Delete();
+        db.Products()
+            .Where(p => p.Id == id)
+            .Set(p => p.IsDeleted, true)
+            .Set(p => p.IsActive, false)
+            .Set(p => p.UpdatedAtUtc, DateTime.UtcNow)
+            .Update();
     }
 
+    public ProductResponseDTO SetProductActive(int id, bool isActive, string callerId, bool isAdmin)
+    {
+        Product? product = db.Products().FirstOrDefault(p => p.Id == id && !p.IsDeleted);
+        if (product is null)
+            throw new NotFoundException("Product with id = " + id + " was not found.");
+
+        if (!isAdmin && product.VendorId != callerId)
+            throw new ForbiddenException("You do not have permission to modify this product.");
+
+        db.Products()
+            .Where(p => p.Id == id)
+            .Set(p => p.IsActive, isActive)
+            .Set(p => p.UpdatedAtUtc, DateTime.UtcNow)
+            .Update();
+
+        return GetProduct(id, callerId, isAdmin);
+    }
     
     // Image CRUD
     
@@ -279,5 +310,26 @@ public class ProductService: IProductService
             throw new BadRequestException("Stock cannot be negative.");
         if (dto.CategoryId <= 0)
             throw new BadRequestException("Choose a category.");
+    }
+    public ProductResponseDTO UpdateStock(int id, int stock, string callerId, bool isAdmin)
+    {
+        if (stock < 0)
+            throw new BadRequestException("Stock cannot be negative.");
+
+        Product? product = db.Products().FirstOrDefault(p => p.Id == id &&!p.IsDeleted);
+        if (product is null)
+            throw new NotFoundException("Product with id = " + id + " was not found.");
+
+        if (!isAdmin && product.VendorId != callerId)
+            throw new ForbiddenException("You do not have permission to modify this product.");
+
+        // Only stock changes so no need for Admin to approve again
+        db.Products()
+            .Where(p => p.Id == id)
+            .Set(p => p.Stock, stock)
+            .Set(p => p.UpdatedAtUtc, DateTime.UtcNow)
+            .Update();
+
+        return GetProduct(id, callerId, isAdmin);
     }
 }

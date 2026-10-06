@@ -24,6 +24,13 @@ public class ProductController(ProductService service) : ControllerBase
     }
 
     [Authorize(Roles = Roles.Admin)]
+    [HttpGet(nameof(GetAllProducts))]
+    public List<ProductResponseDTO> GetAllProducts()
+    {
+        return service.GetAllProducts();
+    }
+    
+    [Authorize(Roles = Roles.Admin)]
     [HttpGet(nameof(GetPendingProducts))]
     public List<ProductResponseDTO> GetPendingProducts()
     {
@@ -52,6 +59,18 @@ public class ProductController(ProductService service) : ControllerBase
     public ProductResponseDTO UpdateProduct(int id, [FromForm] ProductRequestDTO dto)
     {
         return service.UpdateProduct(id, dto, User.GetUserId(), User.IsAdmin());
+    }
+    
+    [HttpPut(nameof(SetProductActive))]
+    public ProductResponseDTO SetProductActive(int id, bool isActive)
+    {
+        return service.SetProductActive(id, isActive, User.GetUserId(), User.IsAdmin());
+    }
+
+    [HttpPut(nameof(UpdateStock))]
+    public ProductResponseDTO UpdateStock(int id, int stock)
+    {
+        return service.UpdateStock(id, stock, User.GetUserId(), User.IsAdmin());
     }
 
     [Authorize(Roles = Roles.Admin)]

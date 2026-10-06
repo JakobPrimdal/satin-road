@@ -227,3 +227,12 @@ export const updateCategory = (id: number, name: string) =>
   call(() => api.updateCategory.categoryUpdateCategory({ name }, { id })).then(toCategory);
 
 export const deleteCategory = (id: number) => call(() => api.deleteCategory.categoryDeleteCategory({ id }, { format: "json" }));
+
+export const getAllProducts = () =>
+    call(() => api.getAllProducts.productGetAllProducts()).then(list => list.map(toProduct));
+
+export const setProductActive = (id: number, isActive: boolean) =>
+    call(() => api.setProductActive.productSetProductActive({ id, isActive })).then(toProduct);
+
+export const updateStock = (id: number, stock: number) =>
+    call(() => api.updateStock.productUpdateStock({ id, stock })).then(toProduct);
