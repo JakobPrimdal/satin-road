@@ -20,8 +20,5 @@ public class ProductDb(DataOptions<ProductDb> dataOptions) : DataConnection(data
     {
         return this.GetTable<Category>();
     }
-    public ITable<OrderProduct> OrderProducts()
-    {
-        return this.GetTable<OrderProduct>();
-    }
+  
 }

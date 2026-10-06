@@ -19,6 +19,8 @@ public class Product
     [Column] [NotNull] public string Status { get; set; } = ProductStatus.Pending;  
     [Column] [NotNull] public bool IsActive { get; set; } = true;  
     
+    [Column] [NotNull] public bool IsDeleted { get; set; } = false; 
+    
     [Association(ThisKey = nameof(Id), OtherKey = nameof(ProductImage.ProductId))]
     public IEnumerable<ProductImage> Images { get; set; } = [];
 }

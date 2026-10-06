@@ -31,7 +31,7 @@ public class ProductService: IProductService
     {
         return db.Products()
             .LoadWith(p => p.Images)
-            .Where(p => p.VendorId == callerId)
+            .Where(p => p.VendorId == callerId && !p.IsDeleted)
             .ToList()
             .Select(ToDto)
             .ToList();
@@ -153,12 +153,24 @@ public class ProductService: IProductService
 // but keeps the row so order history still points to it
     public void DeleteProduct(int id, string callerId, bool isAdmin)
     {
-        SetProductActive(id, false, callerId, isAdmin);
+        Product? product = db.Products().FirstOrDefault(p => p.Id == id && !p.IsDeleted);
+        if (product is null)
+            throw new NotFoundException("Product with id = " + id + " was not found.");
+
+        if (!isAdmin && product.VendorId != callerId)
+            throw new ForbiddenException("You do not have permission to modify this product.");
+
+        db.Products()
+            .Where(p => p.Id == id)
+            .Set(p => p.IsDeleted, true)
+            .Set(p => p.IsActive, false)
+            .Set(p => p.UpdatedAtUtc, DateTime.UtcNow)
+            .Update();
     }
 
     public ProductResponseDTO SetProductActive(int id, bool isActive, string callerId, bool isAdmin)
     {
-        Product? product = db.Products().FirstOrDefault(p => p.Id == id);
+        Product? product = db.Products().FirstOrDefault(p => p.Id == id && !p.IsDeleted);
         if (product is null)
             throw new NotFoundException("Product with id = " + id + " was not found.");
 
