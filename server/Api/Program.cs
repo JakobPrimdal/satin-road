@@ -122,6 +122,8 @@ using (var scope = app.Services.CreateScope())
                           [Status]        NVarChar(20)  NOT NULL DEFAULT 'Pending',
                           [IsActive]      INTEGER       NOT NULL DEFAULT 1,
                           [IsDeleted]     INTEGER       NOT NULL DEFAULT 0,
+                          [RestoredByAdminAtUtc] DateTime2 NULL,
+                          [AdminNotice]   NVarChar(20)  NULL,
                           FOREIGN KEY ([VendorId]) REFERENCES [User]([UserId]),
                           FOREIGN KEY ([CategoryId]) REFERENCES [Category]([Id])
                       );

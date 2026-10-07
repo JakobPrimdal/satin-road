@@ -128,4 +128,10 @@ public class ProductController(ProductService service) : ControllerBase
         service.DeleteImage(imageId, User.GetUserId(), User.IsAdmin());
         return NoContent();
     }
+    [HttpPost(nameof(ClearAdminNotices))]
+    public IActionResult ClearAdminNotices()
+    {
+        service.ClearAdminNotices(User.GetUserId());
+        return NoContent();
+    }
 }

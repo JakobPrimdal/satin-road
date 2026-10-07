@@ -54,6 +54,8 @@ export interface Product {
   vendorUsername: string;
   status: string;
   isActive: boolean;
+  restoredByAdmin: boolean
+  adminNotice: string | null;
   images: ProductImage[];
 }
 
@@ -133,6 +135,8 @@ function toProduct(dto: ProductResponseDTO): Product {
     vendorUsername: dto.vendorUsername ?? "",
     status: dto.status ?? "",
     isActive: dto.isActive ?? true,
+    restoredByAdmin: !!dto.restoredByAdminAtUtc,
+    adminNotice: dto.adminNotice ?? null,
     images: (dto.images ?? [])
       .map(image => ({ id: image.id ?? 0, isPrimary: image.isPrimary ?? false, sortOrder: image.sortOrder ?? 0 }))
       .sort((a, b) => a.sortOrder - b.sortOrder),
@@ -242,3 +246,6 @@ export const setProductActive = (id: number, isActive: boolean) =>
 
 export const updateStock = (id: number, stock: number) =>
   call(() => api.updateStock.productUpdateStock({ id, stock })).then(toProduct);
+
+export const clearAdminNotices = () =>
+    call(() => api.clearAdminNotices.productClearAdminNotices({ format: "json" }));

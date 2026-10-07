@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router";
 import { useMarket } from "@/components/market/MarketData";
 import { ProductPhoto } from "@/components/market/ProductPhoto";
 import { Button, Spinner } from "@/components/ui";
-import { ApiError, deleteProduct, getMyProducts,  setProductActive, updateStock, type Product } from "@/lib/api";
+import { ApiError, deleteProduct, getMyProducts,  setProductActive, updateStock,clearAdminNotices, type Product } from "@/lib/api";
 import { formatPrice, primaryImage,  } from "@/lib/format";
 
 type State = { status: "loading" | "ready" | "error"; products: Product[]; error: string | null };
@@ -19,11 +19,24 @@ export function MyListingsPage() {
   const location = useLocation();
   const flash = (location.state as { flash?: string } | null)?.flash;
   const [state, setState] = useState<State>({ status: "loading", products: [], error: null });
-
+  const [tab, setTab] = useState<"active" | "inactive">("active");
+  const [notices, setNotices] = useState<Product[]>([]);
+  const isInactive = (p: Product) => !p.isActive || p.status === "Rejected";
+  const activeList = state.products.filter(p => !isInactive(p));
+  const inactiveList = state.products.filter(isInactive);
+  const shown = tab === "active" ? activeList : inactiveList;
+  const reactivatedByAdmin = notices.filter(p => p.adminNotice === "Reactivated");
+  const restoredByAdmin = notices.filter(p => p.adminNotice === "Restored");
+  const titles = (list: Product[]) => list.map(p => `"${p.title}"`).join(", ");
   const load = useCallback(async () => {
     try {
       const products = await getMyProducts();
       setState({ status: "ready", products: products.sort((a, b) => b.id - a.id), error: null });
+      const withNotice = products.filter(p => p.adminNotice);
+      if (withNotice.length > 0) {
+        setNotices(withNotice); // only set when there is something, so a second load can't wipe it
+        clearAdminNotices().catch(() => {});
+      }
     } catch (err) {
       setState({ status: "error", products: [], error: err instanceof ApiError ? err.message : "Something went wrong." });
     }
@@ -73,7 +86,35 @@ export function MyListingsPage() {
           {flash}
         </p>
       )}
-
+      {reactivatedByAdmin.length > 0 && (
+          <p role="status" className="mb-6 rounded-lg border border-accent/25 bg-accent/5 px-4 py-3 text-[15px] text-accent">
+            An admin reactivated {titles(reactivatedByAdmin)}. It's back on sale.
+          </p>
+      )}
+      {restoredByAdmin.length > 0 && (
+          <p role="status" className="mb-6 rounded-lg border border-accent/25 bg-accent/5 px-4 py-3 text-[15px] text-accent">
+            An admin restored {titles(restoredByAdmin)}, which you deleted. It's in Inactive: reactivate it or delete it again.
+          </p>
+      )}
+      {state.status === "ready" && state.products.length > 0 && (
+          <div role="group" aria-label="Show listings" className="mb-6 flex w-fit rounded-lg border border-line bg-surface p-1">
+            {([
+              ["active", "Active", activeList.length],
+              ["inactive", "Inactive", inactiveList.length],
+            ] as const).map(([value, label, count]) => (
+                <button
+                    key={value}
+                    type="button"
+                    aria-pressed={tab === value}
+                    onClick={() => setTab(value)}
+                    className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm text-muted outline-none transition-colors hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/40 aria-pressed:bg-raised aria-pressed:text-fg"
+                >
+                  {label}
+                  <span className="text-[12px] text-faint">{count}</span>
+                </button>
+            ))}
+          </div>
+      )}
       {state.status === "loading" ? (
         <div className="flex flex-col gap-3" aria-hidden="true">
           {[0, 1, 2].map(i => (
@@ -89,31 +130,40 @@ export function MyListingsPage() {
           </Button>
         </div>
       ) : state.products.length === 0 ? (
-        <div className="rounded-lg border border-line px-6 py-16 text-center">
-          <p className="text-lg font-medium tracking-tight">You haven't listed anything yet.</p>
-          <p className="mx-auto mt-2 max-w-md text-[15px] text-muted">
-            Add a title, price, stock and a few photos. Buyers see it once an admin approves it.
+          <div className="rounded-lg border border-line px-6 py-16 text-center">
+            <p className="text-lg font-medium tracking-tight">You haven't listed anything yet.</p>
+            <p className="mx-auto mt-2 max-w-md text-[15px] text-muted">
+              Add a title, price, stock and a few photos. Buyers see it once an admin approves it.
+            </p>
+          </div>
+      ) : shown.length === 0 ? (
+          <p className="rounded-lg border border-line px-6 py-12 text-center text-[15px] text-muted">
+            {tab === "active" ? "No active listings." : "Nothing inactive. Deactivated and rejected listings show up here."}
           </p>
-        </div>
       ) : (
-        <ul className="divide-y divide-line border-y border-line">
-          {state.products.map(product => (
-            <ListingRow key={product.id} product={product} categoryName={market.categoryName(product.categoryId)}  onRemove={removeFromListings}
-                        onDeactivate={deactivate}
-                        onReactivate={reactivate}
-                        onChange={replace} />
-          ))}
-        </ul>
+          <ul className="divide-y divide-line border-y border-line">
+            {shown.map(product => (
+                <ListingRow
+                    key={product.id}
+                    product={product}
+                    categoryName={market.categoryName(product.categoryId)}
+                    onRemove={removeFromListings}
+                    onDeactivate={deactivate}
+                    onReactivate={reactivate}
+                    onChange={replace}
+                />
+            ))}
+          </ul>
       )}
     </>
   );
 }
 
 function summarize(products: Product[]): string {
-  const live = products.filter(p => p.status === "Approved").length;
+  const live = products.filter(p => p.status === "Approved" && p.isActive).length;
   const pending = products.filter(p => p.status === "Pending").length;
   const rejected = products.filter(p => p.status === "Rejected").length;
-  const soldOut = products.filter(p => p.status === "Approved" && p.stock <= 0).length;
+  const soldOut = products.filter(p => p.status === "Approved" && p.isActive && p.stock <= 0).length;
   return [
     `${live} live`,
     pending > 0 ? `${pending} waiting for approval` : null,
@@ -145,6 +195,7 @@ function ListingRow({
   const status = !product.isActive && product.status !== "Rejected"
       ? { label: "Inactive", className: "border-line-strong text-faint" }
       : statusStyle[product.status] ?? { label: product.status, className: "border-line-strong text-muted" };
+  
 
   // Runs deactivate/reactivate and shows an error under the row if it fails
   async function run(action: (product: Product) => Promise<void>) {
@@ -168,21 +219,24 @@ function ListingRow({
     }
   }
   return (
-    <li className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-4 gap-y-3 py-5 sm:grid-cols-[5rem_minmax(0,1fr)_8rem_auto] sm:items-center">
-      <div className="relative row-span-2 sm:row-span-1">
-        <ProductPhoto imageId={primaryImage(product)?.id} alt={product.title} className="aspect-square rounded-md" />
-      </div>
-
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <Link
-            to={`/market/listings/${product.id}`}
-            className="truncate text-[15px] text-fg underline-offset-4 outline-none hover:underline focus-visible:underline"
-          >
-            {product.title}
-          </Link>
-          <span className={`shrink-0 rounded border px-1.5 py-px text-[11px] ${status.className}`}>{status.label}</span>
+      <li className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-4 gap-y-3 py-5 sm:grid-cols-[5rem_minmax(0,1fr)_8rem_auto] sm:items-center">
+        <div className="relative row-span-2 sm:row-span-1">
+          <ProductPhoto imageId={primaryImage(product)?.id} alt={product.title} className="aspect-square rounded-md" />
         </div>
+
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <Link
+                to={`/market/listings/${product.id}`}
+                className="truncate text-[15px] text-fg underline-offset-4 outline-none hover:underline focus-visible:underline"
+            >
+              {product.title}
+            </Link>
+            <span className={`shrink-0 rounded border px-1.5 py-px text-[11px] ${status.className}`}>{status.label}</span>
+            {product.restoredByAdmin && (
+                <span className="shrink-0 rounded border border-accent/30 px-1.5 py-px text-[11px] text-accent">Restored by admin</span>
+            )}
+          </div>
         <p className="mt-1 text-[13px] text-muted">
           {categoryName ?? "Uncategorized"}, {formatPrice(product.price)}
         </p>
@@ -206,25 +260,27 @@ function ListingRow({
           </>
         ) : (
             <>
-              {product.status !== "Rejected" && (
+              {product.isActive && product.status !== "Rejected" ? (
                   <>
                     <Link to={`/market/listings/${product.id}`} className={actionClass}>
                       Edit
                     </Link>
-                    {product.isActive ? (
-                        <button type="button" onClick={() => run(onDeactivate)} className={actionClass}>
-                          Deactivate
-                        </button>
-                    ) : (
+                    <button type="button" onClick={() => run(onDeactivate)} className={actionClass}>
+                      Deactivate
+                    </button>
+                  </>
+              ) : (
+                  <>
+                    {product.status !== "Rejected" && (
                         <button type="button" onClick={() => run(onReactivate)} className={actionClass}>
                           Reactivate
                         </button>
                     )}
+                    <button type="button" onClick={() => setConfirming(true)} className={dangerActionClass}>
+                      Delete
+                    </button>
                   </>
               )}
-              <button type="button" onClick={() => setConfirming(true)} className={dangerActionClass}>
-                Delete
-              </button>
             </>
         )}
       </div>

@@ -12,5 +12,9 @@ public class ProductResponseDTO
     public string VendorUsername { get; set; } = "";
     public string Status { get; set; } = "";
     public bool IsActive { get; set; }
+     
+    public DateTime? RestoredByAdminAtUtc { get; set; }
+    
+    public string? AdminNotice { get; set; }
     public List<ProductImageDTO> Images { get; set; }
 }
