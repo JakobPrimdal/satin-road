@@ -1,5 +1,6 @@
 ﻿using Facet;
 using Infrastructure;
+using Infrastructure.Entities;
 
 namespace Service;
 

@@ -5,7 +5,7 @@ import { Field } from "@base-ui/react/field";
 const inputClass =
   "h-11 w-full rounded-lg border border-line bg-field px-3.5 text-[15px] text-fg caret-accent outline-none any-pointer-coarse:text-base transition-[border-color,box-shadow] placeholder:text-faint hover:border-line-strong focus:border-accent/60 focus:ring-3 focus:ring-accent/10 group-data-invalid:focus:border-line-strong group-data-invalid:focus:ring-danger/10";
 
-const threadClass = "pointer-events-none absolute inset-0 rounded-lg border-b-2";
+export const threadClass = "pointer-events-none absolute inset-0 rounded-lg border-b-2";
 
 interface TextFieldProps {
   name: string;
@@ -14,6 +14,9 @@ interface TextFieldProps {
   validate?: ComponentProps<typeof Field.Root>["validate"];
   type?: string;
   autoComplete?: string;
+  defaultValue?: string;
+  placeholder?: string;
+  inputMode?: "text" | "decimal" | "numeric";
 }
 
 function FieldFrame({ name, label, hint, validate, children }: TextFieldProps & { children: ReactNode }) {
@@ -38,16 +41,34 @@ function FieldFrame({ name, label, hint, validate, children }: TextFieldProps & 
   );
 }
 
-export function TextField({ type = "text", autoComplete, ...props }: TextFieldProps) {
+export function TextField({ type = "text", autoComplete, defaultValue, placeholder, inputMode, ...props }: TextFieldProps) {
   return (
     <FieldFrame {...props}>
       <Field.Control
         type={type}
+        defaultValue={defaultValue}
+        placeholder={placeholder}
+        inputMode={inputMode}
         autoComplete={autoComplete}
         autoCapitalize="none"
         autoCorrect="off"
         spellCheck={false}
         className={inputClass}
+      />
+    </FieldFrame>
+  );
+}
+
+export function TextAreaField({ defaultValue, maxLength, ...props }: TextFieldProps & { maxLength: number }) {
+  const [length, setLength] = useState(defaultValue?.length ?? 0);
+
+  return (
+    <FieldFrame {...props} hint={`${length} / ${maxLength}`}>
+      <Field.Control
+        render={<textarea rows={6} />}
+        defaultValue={defaultValue}
+        onChange={event => setLength(event.target.value.length)}
+        className={`${inputClass} h-auto min-h-36 resize-y py-3 leading-relaxed`}
       />
     </FieldFrame>
   );

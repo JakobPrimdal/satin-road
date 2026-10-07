@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useSearchParams } from "react-router";
+import { Navigate, useSearchParams } from "react-router";
 import { Form } from "@base-ui/react/form";
 import { Tabs } from "@base-ui/react/tabs";
 import { Wordmark } from "@/components/Logo";
 import { PasswordField, SubmitButton, TextField, type Notice } from "@/components/ui";
 import { ApiError, login, register } from "@/lib/api";
+import { isAdmin, setSession, useSession } from "@/lib/session";
 
 type Mode = "login" | "register";
 
@@ -22,6 +23,9 @@ const copy = {
 export function AuthPage() {
   const [params, setParams] = useSearchParams();
   const mode: Mode = params.get("mode") === "register" ? "register" : "login";
+  const session = useSession();
+
+  if (session) return <Navigate to={isAdmin(session) ? "/admin" : "/market"} replace />;
 
   return (
     <div className="flex min-h-screen flex-col px-6">
@@ -75,12 +79,20 @@ function AuthForm({ mode }: { mode: Mode }) {
     setShowNotice(false);
     setFieldErrors({});
     setBusy(true);
+    let registered = false;
     try {
       const credentials = { username: values.username!.trim(), password: values.password! };
-      const user = isRegister ? await register(credentials) : await login(credentials);
-      setNotice({ tone: "success", text: isRegister ? "Account created" : `Signed in as ${user.username ?? credentials.username}` });
-      setShowNotice(true);
+      if (isRegister) {
+        await register(credentials);
+        registered = true;
+      }
+      setSession(await login(credentials));
     } catch (err) {
+      if (registered) {
+        setNotice({ tone: "success", text: "Account created. Sign in to continue." });
+        setShowNotice(true);
+        return;
+      }
       const message = err instanceof ApiError ? err.message : "Something went wrong.";
       const field = fieldFor(message);
       if (field) {

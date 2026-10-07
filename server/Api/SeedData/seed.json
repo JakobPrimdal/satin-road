@@ -1,0 +1,195 @@
+{
+  "defaultPassword": "password",
+  "users": [
+    { "username": "moderator", "role": "Admin" },
+    { "username": "greenwave" },
+    { "username": "hofmann" },
+    { "username": "pharmacist" },
+    { "username": "headshop" },
+    { "username": "keymaster" },
+    { "username": "ghostline" },
+    { "username": "atelier" },
+    { "username": "nightowl" },
+    { "username": "quietbuyer" },
+    { "username": "anon7731" },
+    { "username": "dread_pirate", "isActive": false }
+  ],
+  "categories": [
+    "Books",
+    "Cannabis",
+    "Lockpicking",
+    "Paraphernalia",
+    "Pharmacy",
+    "Privacy & Security",
+    "Psychedelics",
+    "Replicas"
+  ],
+  "products": [
+    {
+      "title": "Banned books bundle, 6 titles",
+      "description": "Six once-banned classics: Ulysses, Lady Chatterley's Lover, Tropic of Cancer, Naked Lunch, Howl and Lolita. Mixed paperback and hardcover.",
+      "price": 48.00, "stock": 4, "category": "Books", "vendor": "anon7731", "status": "Approved", "daysAgo": 58,
+      "images": ["banned-books-1.jpg", "banned-books-2.jpg"]
+    },
+    {
+      "title": "Lock pick set, 4 pieces",
+      "description": "Four stainless steel picks for pin tumbler locks, with flat handles.",
+      "price": 29.99, "stock": 12, "category": "Lockpicking", "vendor": "keymaster", "status": "Approved", "daysAgo": 55,
+      "images": ["lockpicks-1.jpg"]
+    },
+    {
+      "title": "Northern Lights, 3.5 g",
+      "description": "Indica-dominant, indoor grown and slow cured. Dense, resinous buds.",
+      "price": 45.00, "stock": 18, "category": "Cannabis", "vendor": "greenwave", "status": "Approved", "daysAgo": 52,
+      "images": ["northern-lights-1.jpg"]
+    },
+    {
+      "title": "Hardware security key",
+      "description": "USB hardware key for two-factor sign-in. Works with most password managers and browsers.",
+      "price": 55.00, "stock": 9, "category": "Privacy & Security", "vendor": "ghostline", "status": "Approved", "daysAgo": 49,
+      "isDeleted": false,
+      "images": ["security-key-1.jpg", "security-key-2.jpg"]
+    },
+    {
+      "title": "Antique brass smoking pipe",
+      "description": "Long-stemmed brass pipe with a small bowl. One of a kind.",
+      "price": 140.00, "stock": 0, "category": "Paraphernalia", "vendor": "dread_pirate", "status": "Approved", "daysAgo": 47,
+      "isDeleted": true,
+      "images": ["brass-pipe-1.jpg"]
+    },
+    {
+      "title": "Eye of Horus blotter, 9 tabs",
+      "description": "One sheet of nine tabs with Eye of Horus art.",
+      "price": 90.00, "stock": 6, "category": "Psychedelics", "vendor": "hofmann", "status": "Approved", "daysAgo": 44,
+      "images": ["lsd-1.jpg"]
+    },
+    {
+      "title": "Replica dive watch",
+      "description": "Automatic movement, 41 mm steel case and rotating bezel. Comes with a rubber strap.",
+      "price": 180.00, "stock": 3, "category": "Replicas", "vendor": "atelier", "status": "Approved", "daysAgo": 41,
+      "images": ["dive-watch-1.jpg"]
+    },
+    {
+      "title": "Modalert 200 mg, 10 tablets",
+      "description": "Modafinil 200 mg, one sealed strip of ten tablets.",
+      "price": 25.00, "stock": 30, "category": "Pharmacy", "vendor": "pharmacist", "status": "Approved", "daysAgo": 38,
+      "images": ["modafinil-1.jpg"]
+    },
+    {
+      "title": "Lebanese hash, 5 g",
+      "description": "Traditional sieved hash from the Bekaa Valley. Soft and aromatic.",
+      "price": 60.00, "stock": 10, "category": "Cannabis", "vendor": "greenwave", "status": "Approved", "daysAgo": 35,
+      "images": ["hash-1.jpg", "hash-2.jpg"]
+    },
+    {
+      "title": "Vintage Rizla rolling machine",
+      "description": "Rizla Super Express cigarette roller in its original box. Made in Belgium.",
+      "price": 22.00, "stock": 1, "category": "Paraphernalia", "vendor": "headshop", "status": "Approved", "daysAgo": 33,
+      "isActive": false,
+      "images": ["rolling-machine-1.jpg", "rolling-machine-2.jpg"]
+    },
+    {
+      "title": "Prepaid flip phone, unlocked",
+      "description": "Unlocked flip phone, factory reset and ready for any SIM.",
+      "price": 49.00, "stock": 7, "category": "Privacy & Security", "vendor": "quietbuyer", "status": "Approved", "daysAgo": 30,
+      "images": ["flip-phone-1.jpg", "flip-phone-2.jpg"]
+    },
+    {
+      "title": "Golden Teacher mushrooms, 3.5 g",
+      "description": "Psilocybe cubensis, Golden Teacher strain.",
+      "price": 30.00, "stock": 14, "category": "Psychedelics", "vendor": "hofmann", "status": "Approved", "daysAgo": 27,
+      "images": ["mushrooms-1.jpg", "mushrooms-2.jpg"]
+    },
+    {
+      "title": "Cutaway practice padlock",
+      "description": "Padlock with a cutaway body so you can see the pins move. Includes two keys.",
+      "price": 34.00, "stock": 5, "category": "Lockpicking", "vendor": "keymaster", "status": "Approved", "daysAgo": 24,
+      "images": ["practice-lock-1.jpg", "practice-lock-2.jpg"]
+    },
+    {
+      "title": "Vintage sci-fi paperbacks, set of 2",
+      "description": "Robert Heinlein's The Man Who Sold the Moon and Alfred Bester's The Deceivers. Read, but in good shape.",
+      "price": 24.00, "stock": 2, "category": "Books", "vendor": "quietbuyer", "status": "Approved", "daysAgo": 21,
+      "images": ["scifi-paperbacks-1.jpg", "scifi-paperbacks-2.jpg"]
+    },
+    {
+      "title": "Bitcoin hardware wallet",
+      "description": "Hardware wallet that keeps your keys offline. Factory sealed.",
+      "price": 79.00, "stock": 6, "category": "Privacy & Security", "vendor": "ghostline", "status": "Approved", "daysAgo": 18,
+      "images": ["crypto-wallet-1.jpg", "crypto-wallet-2.jpg"]
+    },
+    {
+      "title": "Diazepam 5 mg, 20 tablets",
+      "description": "Two blister strips of ten tablets.",
+      "price": 40.00, "stock": 8, "category": "Pharmacy", "vendor": "pharmacist", "status": "Approved", "daysAgo": 15,
+      "images": ["diazepam-1.jpg", "diazepam-2.jpg"]
+    },
+    {
+      "title": "Replica designer sunglasses",
+      "description": "Browline frame with green lenses. Comes with a case and cloth.",
+      "price": 35.00, "stock": 10, "category": "Replicas", "vendor": "atelier", "status": "Rejected", "daysAgo": 13,
+      "images": ["sunglasses-1.jpg", "sunglasses-2.jpg"]
+    },
+    {
+      "title": "Four-piece herb grinder",
+      "description": "Aluminium grinder with sharp teeth and a pollen catcher.",
+      "price": 18.50, "stock": 25, "category": "Paraphernalia", "vendor": "greenwave", "status": "Approved", "daysAgo": 11,
+      "images": ["grinder-1.jpg", "grinder-2.jpg"]
+    },
+    {
+      "title": "Ecstasy pills, 10 pack",
+      "description": "Pressed tablets, sold in packs of ten.",
+      "price": 120.00, "stock": 9, "category": "Psychedelics", "vendor": "nightowl", "status": "Approved", "daysAgo": 8,
+      "images": ["ecstasy-1.jpg", "ecstasy-2.jpg"]
+    },
+    {
+      "title": "Hand-rolled joints, 5 pack",
+      "description": "Five hand-rolled joints, about 0.8 g each.",
+      "price": 35.00, "stock": 20, "category": "Cannabis", "vendor": "greenwave", "status": "Approved", "daysAgo": 6,
+      "images": ["prerolls-1.jpg"]
+    },
+    {
+      "title": "Prepaid SIM cards, 3 pack",
+      "description": "Three prepaid SIM cards in standard, micro and nano sizes.",
+      "price": 15.00, "stock": 40, "category": "Privacy & Security", "vendor": "ghostline", "status": "Pending", "daysAgo": 4,
+      "images": ["sim-cards-1.jpg"]
+    },
+    {
+      "title": "Replica designer clutch",
+      "description": "Embroidered clutch with a magnetic clasp and lined interior.",
+      "price": 95.00, "stock": 4, "category": "Replicas", "vendor": "atelier", "status": "Pending", "daysAgo": 2,
+      "images": ["clutch-1.jpg"]
+    },
+    {
+      "title": "How Children Fail, Pelican edition",
+      "description": "John Holt's classic in the original Pelican paperback. Well read.",
+      "price": 9.50, "stock": 1, "category": "Books", "vendor": "headshop", "status": "Pending", "daysAgo": 1,
+      "images": ["pelican-1.jpg"]
+    }
+  ],
+  "orders": [
+    { "customer": "dread_pirate", "daysAgo": 45, "items": [{ "product": "Northern Lights, 3.5 g", "quantity": 1 }] },
+    { "customer": "greenwave", "daysAgo": 28, "items": [{ "product": "Prepaid flip phone, unlocked", "quantity": 1 }] },
+    { "customer": "keymaster", "daysAgo": 25, "items": [{ "product": "Vintage Rizla rolling machine", "quantity": 1 }] },
+    { "customer": "pharmacist", "daysAgo": 20, "items": [{ "product": "Vintage sci-fi paperbacks, set of 2", "quantity": 1 }] },
+    { "customer": "atelier", "daysAgo": 10, "items": [{ "product": "Diazepam 5 mg, 20 tablets", "quantity": 1 }] },
+    { "customer": "headshop", "daysAgo": 7, "items": [{ "product": "Ecstasy pills, 10 pack", "quantity": 1 }] },
+    { "customer": "nightowl", "daysAgo": 50, "items": [{ "product": "Northern Lights, 3.5 g", "quantity": 1 }] },
+    { "customer": "nightowl", "daysAgo": 47, "items": [{ "product": "Northern Lights, 3.5 g", "quantity": 1 }] },
+    { "customer": "nightowl", "daysAgo": 44, "items": [{ "product": "Northern Lights, 3.5 g", "quantity": 2 }] },
+    { "customer": "nightowl", "daysAgo": 39, "items": [{ "product": "Northern Lights, 3.5 g", "quantity": 1 }] },
+    { "customer": "nightowl", "daysAgo": 33, "items": [{ "product": "Lebanese hash, 5 g", "quantity": 1 }] },
+    { "customer": "nightowl", "daysAgo": 26, "items": [{ "product": "Northern Lights, 3.5 g", "quantity": 1 }] },
+    { "customer": "nightowl", "daysAgo": 19, "items": [{ "product": "Lebanese hash, 5 g", "quantity": 1 }] },
+    { "customer": "nightowl", "daysAgo": 14, "items": [{ "product": "Northern Lights, 3.5 g", "quantity": 1 }] },
+    { "customer": "nightowl", "daysAgo": 40, "items": [{ "product": "Northern Lights, 3.5 g", "quantity": 2 }, { "product": "Lock pick set, 4 pieces", "quantity": 1 }] },
+    { "customer": "quietbuyer", "daysAgo": 36, "items": [{ "product": "Hardware security key", "quantity": 1 }] },
+    { "customer": "anon7731", "daysAgo": 31, "items": [{ "product": "Eye of Horus blotter, 9 tabs", "quantity": 1 }] },
+    { "customer": "nightowl", "daysAgo": 29, "items": [{ "product": "Antique brass smoking pipe", "quantity": 1 }, { "product": "Lebanese hash, 5 g", "quantity": 1 }] },
+    { "customer": "ghostline", "daysAgo": 22, "items": [{ "product": "Banned books bundle, 6 titles", "quantity": 1 }] },
+    { "customer": "quietbuyer", "daysAgo": 16, "items": [{ "product": "Replica dive watch", "quantity": 1 }, { "product": "Cutaway practice padlock", "quantity": 1 }] },
+    { "customer": "anon7731", "daysAgo": 9, "items": [{ "product": "Golden Teacher mushrooms, 3.5 g", "quantity": 2 }, { "product": "Modalert 200 mg, 10 tablets", "quantity": 1 }] },
+    { "customer": "hofmann", "daysAgo": 5, "items": [{ "product": "Bitcoin hardware wallet", "quantity": 1 }] },
+    { "customer": "nightowl", "daysAgo": 2, "items": [{ "product": "Golden Teacher mushrooms, 3.5 g", "quantity": 1 }, { "product": "Four-piece herb grinder", "quantity": 1 }] }
+  ]
+}
