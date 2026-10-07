@@ -74,7 +74,7 @@ export function AdminListings() {
       </div>
 
       <p className="mb-6 text-[13px] text-faint">
-        Rejected listings only show here when you rejected them during this visit, or when they're your own.
+        Listings that vendors have deactivated or deleted are not shown here.
       </p>
 
       {visible.length === 0 ? (
@@ -105,7 +105,7 @@ function ListingRow({ product, orderCount }: { product: Product; orderCount: num
     setDeleteError(null);
     try {
       await deleteProduct(product.id);
-      admin.patchListing(product.id, { isActive: false })
+      admin.dropListing(product.id);
     } catch (err) {
       setDeleteError(err instanceof ApiError ? err.message : "Something went wrong.");
       setDeleting(false);

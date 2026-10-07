@@ -40,6 +40,7 @@ public class ProductService: IProductService
     {
         return db.Products()
             .LoadWith(p => p.Images)
+            .Where(p => p.IsActive && !p.IsDeleted)
             .ToList()
             .Select(ToDto)
             .ToList();

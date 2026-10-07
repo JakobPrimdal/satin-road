@@ -52,7 +52,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       const byId = new Map<number, Product>();
       [...live, ...pending, ...mine, ...all].forEach(product => byId.set(product.id, product));
       setCategoriesState(nextCategories);
-      setListings([...byId.values()].sort((a, b) => b.id - a.id));
+      setListings([...byId.values()].filter(p => p.isActive).sort((a, b) => b.id - a.id));
       setOrders(nextOrders.sort((a, b) => b.id - a.id));
       setError(null);
       setStatus("ready");
