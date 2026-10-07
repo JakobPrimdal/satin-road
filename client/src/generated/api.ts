@@ -54,6 +54,7 @@ export interface OrderResponseDTO {
   customerUsername?: string;
   /** @format date-time */
   purchasedAtUtc?: string;
+  raidedVendors?: string[];
   products?: OrderProductResponseDTO[];
 }
 
