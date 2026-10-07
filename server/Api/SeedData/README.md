@@ -15,29 +15,36 @@ off, set `"Seed": { "Enabled": false }` in `appsettings.Development.json`.
 Every seeded user has the password `password`. The original admin keeps the
 username and password from `appsettings.Development.json` (`admin` / `admin`).
 
-| Username | Role | Notes |
-| --- | --- | --- |
-| `admin` | Admin | Created by `AuthService.SeedAdmin` |
-| `moderator` | Admin | Second admin |
-| `greenwave` | User | Vendor: cannabis, grinder |
-| `hofmann` | User | Vendor: psychedelics |
-| `pharmacist` | User | Vendor: pharmacy |
-| `headshop` | User | Vendor: paraphernalia, books |
-| `keymaster` | User | Vendor: lockpicking |
-| `ghostline` | User | Vendor: privacy and security |
-| `atelier` | User | Vendor: replicas |
-| `nightowl` | User | Buyer with three past orders |
-| `quietbuyer` | User | Buyer with two past orders |
-| `anon7731` | User | Buyer with two past orders |
-| `dread_pirate` | User | Deactivated: login says the account was seized |
+Every regular account both sells and buys, like real users would. The two admins
+only moderate.
+
+| Username | Role | Sells | Notes |
+| --- | --- | --- | --- |
+| `admin` | Admin | Nothing | Created by `AuthService.SeedAdmin` |
+| `moderator` | Admin | Nothing | Second admin |
+| `greenwave` | User | Cannabis, grinder | Most sales on the market |
+| `hofmann` | User | Psychedelics | |
+| `pharmacist` | User | Pharmacy | |
+| `headshop` | User | Rolling machine (paused), a book waiting for approval | |
+| `keymaster` | User | Lockpicking | |
+| `ghostline` | User | Privacy and security | One listing waiting for approval |
+| `atelier` | User | Replicas | One rejected, one waiting for approval |
+| `nightowl` | User | Ecstasy pills | 11 past orders from `greenwave`, so their next `greenwave` order gets 20% off |
+| `quietbuyer` | User | Flip phone, sci-fi paperbacks | |
+| `anon7731` | User | Banned books bundle | |
+| `dread_pirate` | User | Brass pipe (deleted) | Seized: login is blocked and the listing is off the market |
 
 ## What gets created
 
 - 8 categories
-- 23 listings: 19 approved, 3 pending (for the admin approval flow) and 1 rejected,
-  one sold out and one with a single unit left, created over the past two months
+- 23 listings spread over 11 accounts: 19 approved, 3 pending (for the admin approval flow)
+  and 1 rejected. One is sold out, one is paused by its vendor (the Rizla rolling machine)
+  and one is deleted (the seized account's brass pipe). Created over the past two months
 - 36 photos, the first photo of each listing is the primary one
-- 9 past orders spread over the past six weeks
+- 23 past orders spread over the past two months. Every regular account has bought and
+  sold at least once, and nobody buys their own listing. Each order line gets the same
+  `DiscountPercent` the API would give it: 20% once the buyer has more than 10 earlier
+  orders with that vendor
 
 ## Photo credits
 

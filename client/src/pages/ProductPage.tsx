@@ -86,7 +86,7 @@ function ProductView({ product }: { product: Product }) {
             )}
           </div>
 
-          <VendorCard vendorId={product.vendorId} listingCount={fromVendor.length} />
+          <VendorCard vendorId={product.vendorId} username={product.vendorUsername} listingCount={fromVendor.length} />
         </div>
       </div>
 
@@ -114,7 +114,7 @@ function ProductView({ product }: { product: Product }) {
   );
 }
 
-function VendorCard({ vendorId, listingCount }: { vendorId: string; listingCount: number }) {
+function VendorCard({ vendorId, username, listingCount }: { vendorId: string; username: string; listingCount: number }) {
   return (
     <Link
       to={`/market?vendor=${vendorId}`}
@@ -124,7 +124,11 @@ function VendorCard({ vendorId, listingCount }: { vendorId: string; listingCount
       <span className="min-w-0 flex-1">
         <span className="block text-[13px] text-muted">Sold by</span>
         <span className="block text-[15px] text-fg">
-          Vendor <span className="font-mono">{shortId(vendorId)}</span>
+          {username || (
+            <>
+              Vendor <span className="font-mono">{shortId(vendorId)}</span>
+            </>
+          )}
         </span>
       </span>
       <span className="shrink-0 text-[13px] text-muted transition-colors group-hover/vendor:text-fg">

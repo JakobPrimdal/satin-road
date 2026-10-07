@@ -74,7 +74,9 @@ export function MarketPage() {
     setParams(nextParams, { replace: true });
   }
 
-  const vendorName = vendorId ? `Vendor ${shortId(vendorId)}` : null;
+  const vendorName = vendorId
+    ? market.products.find(p => p.vendorId === vendorId)?.vendorUsername || `Vendor ${shortId(vendorId)}`
+    : null;
   const title = query
     ? `Results for “${query}”`
     : (vendorName ?? category?.name ?? (featured.length > 0 ? "More listings" : "All listings"));

@@ -24,7 +24,7 @@ export function AdminApprovals() {
     );
   }
 
-  const queue = admin.listings.filter(p => p.status === "Pending" || decided.has(p.id)).sort((a, b) => a.id - b.id);
+  const queue = admin.listings.filter(p => (p.status === "Pending" && p.isActive) || decided.has(p.id)).sort((a, b) => a.id - b.id);
   const waiting = queue.filter(p => p.status === "Pending").length;
   const approvedCount = [...decided.values()].filter(s => s === "Approved").length;
   const rejectedCount = decided.size - approvedCount;
@@ -131,7 +131,7 @@ function ApprovalCard({
           {categoryName ?? "Uncategorized"}, {formatPrice(product.price)}, {stockLabel(product.stock).toLowerCase()}
         </p>
         <div className="mt-2">
-          <Person id={product.vendorId} role="Vendor" link={false} />
+          <Person id={product.vendorId} name={product.vendorUsername} role="Vendor" link={false} />
         </div>
         {product.description ? (
           <p className={`mt-3 max-w-prose text-[15px] leading-relaxed whitespace-pre-line text-fg/85 ${expanded ? "" : "line-clamp-3"}`}>

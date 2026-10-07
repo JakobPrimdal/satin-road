@@ -6,5 +6,6 @@ public class OrderProductResponseDTO
     public string ProductTitle { get; set; }
     public int Quantity { get; set; }
     public string VendorId { get; set; } = "";
+    public string VendorUsername { get; set; } = "";
     public decimal DiscountPercent { get; set; }
 }

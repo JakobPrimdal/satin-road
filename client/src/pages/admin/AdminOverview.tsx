@@ -22,7 +22,10 @@ export function vendorSales(orders: Order[]) {
       sales.set(vendorId, entry);
     }
   }
-  return [...sales.entries()].map(([vendorId, s]) => ({ vendorId, ...s })).sort((a, b) => b.orders - a.orders || b.units - a.units);
+  const names = new Map(orders.flatMap(order => order.items.map(item => [item.vendorId, item.vendorUsername] as const)));
+  return [...sales.entries()]
+    .map(([vendorId, s]) => ({ vendorId, vendorUsername: names.get(vendorId) ?? "", ...s }))
+    .sort((a, b) => b.orders - a.orders || b.units - a.units);
 }
 
 export function AdminOverview() {
@@ -39,8 +42,8 @@ export function AdminOverview() {
     );
   }
 
-  const live = admin.listings.filter(p => p.status === "Approved");
-  const pending = admin.listings.filter(p => p.status === "Pending");
+  const live = admin.listings.filter(p => p.status === "Approved" && p.isActive);
+  const pending = admin.listings.filter(p => p.status === "Pending" && p.isActive);
   const units = admin.orders.reduce((sum, order) => sum + order.items.reduce((s, item) => s + item.quantity, 0), 0);
   const sales = vendorSales(admin.orders);
   const topVendors = sales.slice(0, 6);
@@ -57,7 +60,7 @@ export function AdminOverview() {
           label="Live listings"
           value={live.length}
           note={soldOut > 0 ? `${soldOut} sold out` : "All in stock"}
-          to="/admin/listings?status=Approved"
+          to="/admin/listings?status=live"
         />
         <Stat
           label="Waiting for approval"
@@ -92,7 +95,7 @@ export function AdminOverview() {
                 <li key={vendor.vendorId} className="flex items-center gap-4 px-5 py-3">
                   <span className="w-4 text-[13px] text-faint">{index + 1}</span>
                   <div className="min-w-0 flex-1">
-                    <Person id={vendor.vendorId} role="Vendor" />
+                    <Person id={vendor.vendorId} name={vendor.vendorUsername} role="Vendor" />
                   </div>
                   {vendor.orders > FEATURED_THRESHOLD && (
                     <span className="rounded border border-accent/30 px-1.5 py-px text-[11px] text-accent">Over {FEATURED_THRESHOLD} orders</span>
@@ -117,7 +120,7 @@ export function AdminOverview() {
                 <li key={order.id} className="grid grid-cols-[1fr_auto] items-center gap-x-6 gap-y-1 px-5 py-3 text-[15px] sm:grid-cols-[7rem_1fr_6rem_10rem]">
                   <span>Order #{order.id}</span>
                   <span className="col-start-1 row-start-2 min-w-0 sm:col-start-2 sm:row-start-1">
-                    <Person id={order.customerId} role="Buyer" />
+                    <Person id={order.customerId} name={order.customerUsername} role="Buyer" />
                   </span>
                   <span className="text-right text-[13px] text-muted sm:text-left">
                     {plural(order.items.reduce((s, i) => s + i.quantity, 0), "item")}

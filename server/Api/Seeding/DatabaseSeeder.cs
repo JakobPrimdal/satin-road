@@ -103,7 +103,8 @@ public static class DatabaseSeeder
                 CategoryId = Lookup(categoryIds, seedProduct.Category, "category"),
                 VendorId = Lookup(userIds, seedProduct.Vendor, "user"),
                 Status = seedProduct.Status,
-                IsActive = true,
+                IsActive = seedProduct.IsDeleted != true && (seedProduct.IsActive ?? true),
+                IsDeleted = seedProduct.IsDeleted ?? false,
                 CreatedAtUtc = createdAt,
                 UpdatedAtUtc = createdAt
             };
@@ -135,27 +136,35 @@ public static class DatabaseSeeder
         Dictionary<string, Product> products)
     {
         var now = DateTime.UtcNow;
+        var priorOrders = new Dictionary<(string Customer, string Vendor), int>();
 
-        foreach (var seedOrder in data.Orders)
+        foreach (var seedOrder in data.Orders.OrderByDescending(o => o.DaysAgo))
         {
+            var customerId = Lookup(userIds, seedOrder.Customer, "user");
             var orderId = db.InsertWithInt32Identity(new CustomerOrder
             {
-                CustomerId = Lookup(userIds, seedOrder.Customer, "user"),
+                CustomerId = customerId,
                 PurchasedAtUtc = now.AddDays(-seedOrder.DaysAgo).AddHours(-Random.Shared.Next(0, 12))
             });
 
-            foreach (var item in seedOrder.Items)
+            var items = seedOrder.Items.Select(item => (Product: Lookup(products, item.Product, "product"), item.Quantity)).ToList();
+            var vendors = items.Select(i => i.Product.VendorId).Distinct().ToList();
+
+            foreach (var (product, quantity) in items)
             {
-                var product = Lookup(products, item.Product, "product");
                 db.InsertWithInt32Identity(new OrderProduct
                 {
                     OrderId = orderId,
                     ProductId = product.Id,
                     VendorId = product.VendorId,
-                    Quantity = item.Quantity,
-                    UnitPriceAtPurchase = product.Price
+                    Quantity = quantity,
+                    UnitPriceAtPurchase = product.Price,
+                    DiscountPercent = priorOrders.GetValueOrDefault((customerId, product.VendorId)) > 10 ? 20m : 0m
                 });
             }
+
+            foreach (var vendorId in vendors)
+                priorOrders[(customerId, vendorId)] = priorOrders.GetValueOrDefault((customerId, vendorId)) + 1;
         }
 
         return data.Orders.Count;
@@ -187,7 +196,9 @@ public static class DatabaseSeeder
         string Vendor,
         string Status,
         int DaysAgo,
-        List<string> Images);
+        List<string> Images,
+        bool? IsActive,
+        bool? IsDeleted);
 
     private sealed record SeedOrder(string Customer, int DaysAgo, List<SeedOrderItem> Items);
 

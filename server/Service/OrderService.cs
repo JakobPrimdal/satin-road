@@ -28,7 +28,7 @@ public class OrderService : IOrderService
         if (!isAdmin)
             query = query.Where(o => o.CustomerId == callerId);
         
-        return query.ToList().Select(ToDto).ToList();
+        return ToDtos(query.ToList());
     }
 
     public OrderResponseDTO GetCustomerOrder(int orderId, string callerId, bool isAdmin)
@@ -116,10 +116,28 @@ public class OrderService : IOrderService
         return ToDto(customerOrder!);
     }
 
-    private static OrderResponseDTO ToDto(CustomerOrder o) => new()
+    private Dictionary<string, string> UsernamesFor(IEnumerable<string> userIds)
+    {
+        var ids = userIds.Distinct().ToList();
+        return orderDb.GetTable<User>()
+            .Where(u => ids.Contains(u.UserId))
+            .ToDictionary(u => u.UserId, u => u.Username);
+    }
+
+    private List<OrderResponseDTO> ToDtos(List<CustomerOrder> orders)
+    {
+        var usernames = UsernamesFor(orders.SelectMany(o => o.Products.Select(op => op.VendorId).Append(o.CustomerId)));
+        return orders.Select(o => ToDto(o, usernames)).ToList();
+    }
+
+    private OrderResponseDTO ToDto(CustomerOrder o) =>
+        ToDto(o, UsernamesFor(o.Products.Select(op => op.VendorId).Append(o.CustomerId)));
+
+    private static OrderResponseDTO ToDto(CustomerOrder o, IReadOnlyDictionary<string, string> usernames) => new()
     {
         Id = o.Id,
         CustomerId = o.CustomerId,
+        CustomerUsername = usernames.GetValueOrDefault(o.CustomerId, ""),
         PurchasedAtUtc = o.PurchasedAtUtc,
         Products = o.Products
             .Select(op => new OrderProductResponseDTO
@@ -128,6 +146,7 @@ public class OrderService : IOrderService
                 ProductTitle = op.Product.Title,
                 Quantity = op.Quantity,
                 VendorId = op.VendorId,
+                VendorUsername = usernames.GetValueOrDefault(op.VendorId, ""),
                 DiscountPercent = op.DiscountPercent
             })
             .ToList()

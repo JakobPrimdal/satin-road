@@ -13,6 +13,7 @@ import {
   deleteImage,
   getProduct,
   updateProduct,
+  updateStock,
   uploadImages,
   type ListingInput,
   type Product,
@@ -50,7 +51,7 @@ export function ListingFormPage() {
       <h1 className="mt-6 text-[1.75rem] leading-tight font-medium tracking-tight">{editing ? "Edit listing" : "New listing"}</h1>
       <p className="mt-2 text-[15px] text-muted">
         {editing
-          ? "Saving sends the listing back for approval. Buyers won't see it until an admin approves it again."
+          ? "Changing only the stock saves right away. Any other change sends the listing back for approval before buyers see it again."
           : "Buyers see your listing once an admin approves it."}
       </p>
 
@@ -91,8 +92,23 @@ function ListingForm({ product }: { product: Product | null }) {
       categoryId: categoryId!,
     };
 
+    const stockOnly =
+      product !== null &&
+      removedImages.length === 0 &&
+      files.length === 0 &&
+      input.title === product.title &&
+      input.description === product.description &&
+      input.price === product.price &&
+      input.categoryId === product.categoryId;
+
     setBusy(true);
     try {
+      if (stockOnly) {
+        const saved = input.stock === product.stock ? product : await updateStock(product.id, input.stock);
+        market.reload();
+        navigate("/market/listings", { state: { flash: `Updated the stock of "${saved.title}".` } });
+        return;
+      }
       const saved = product ? await updateProduct(product.id, input) : await createProduct(input);
       for (const imageId of removedImages) await deleteImage(imageId);
       if (files.length > 0) await uploadImages(saved.id, files);
