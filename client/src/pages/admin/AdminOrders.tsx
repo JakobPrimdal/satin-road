@@ -16,7 +16,13 @@ function matches(order: Order, term: string) {
   return (
     String(order.id) === id ||
     order.customerId.replace(/-/g, "").startsWith(term) ||
-    order.items.some(item => item.vendorId.replace(/-/g, "").startsWith(term) || item.title.toLowerCase().includes(term))
+    order.customerUsername.toLowerCase().includes(term) ||
+    order.items.some(
+      item =>
+        item.vendorId.replace(/-/g, "").startsWith(term) ||
+        item.vendorUsername.toLowerCase().includes(term) ||
+        item.title.toLowerCase().includes(term),
+    )
   );
 }
 
@@ -51,7 +57,7 @@ export function AdminOrders() {
             type="search"
             value={query}
             onChange={event => setQuery(event.target.value)}
-            placeholder="Order number, buyer, vendor or item"
+            placeholder="Order number, username or item"
             className="h-10 w-full rounded-lg border border-line bg-field pr-3 pl-9 text-sm text-fg caret-accent outline-none transition-[border-color,box-shadow] placeholder:text-faint hover:border-line-strong focus:border-accent/60 focus:ring-3 focus:ring-accent/10 any-pointer-coarse:text-base"
           />
         </label>
@@ -60,7 +66,7 @@ export function AdminOrders() {
       {admin.orders.length === 0 ? (
         <EmptyState title="No orders yet." body="Orders show up here as soon as buyers check out." />
       ) : visible.length === 0 ? (
-        <EmptyState title="No orders match." body="Search by order number, the first characters of a buyer or vendor ID, or an item title." />
+        <EmptyState title="No orders match." body="Search by order number, a buyer or vendor username, or an item title." />
       ) : (
         <ol className="flex flex-col gap-4">
           {visible.map(order => (
@@ -68,7 +74,7 @@ export function AdminOrders() {
               <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b border-line px-5 py-3.5">
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                   <h2 className="text-[15px] font-medium">Order #{order.id}</h2>
-                  <Person id={order.customerId} role="Buyer" />
+                  <Person id={order.customerId} name={order.customerUsername} role="Buyer" />
                 </div>
                 <time className="text-[13px] text-muted" dateTime={order.purchasedAt.toISOString()}>
                   {dateFormat.format(order.purchasedAt)}
@@ -92,10 +98,17 @@ export function AdminOrders() {
                           <span>{item.title}</span>
                         )}
                         <span className="mt-1 block">
-                          <Person id={item.vendorId} role="Vendor" />
+                          <Person id={item.vendorId} name={item.vendorUsername} role="Vendor" />
                         </span>
                       </span>
-                      <span className="shrink-0 text-muted">× {item.quantity}</span>
+                      <span className="flex shrink-0 items-center gap-3">
+                        {item.discountPercent > 0 && (
+                          <span className="rounded border border-accent/30 px-1.5 py-px text-[11px] text-accent">
+                            {item.discountPercent}% off
+                          </span>
+                        )}
+                        <span className="text-muted">× {item.quantity}</span>
+                      </span>
                     </li>
                   );
                 })}

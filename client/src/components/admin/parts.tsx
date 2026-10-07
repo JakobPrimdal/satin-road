@@ -37,11 +37,11 @@ export function StatusPill({ status }: { status: string }) {
   return <span className={`shrink-0 rounded border px-1.5 py-px text-[11px] ${style.className}`}>{style.label}</span>;
 }
 
-export function Person({ id, role, link = true }: { id: string; role: "Vendor" | "Buyer"; link?: boolean }) {
+export function Person({ id, name, role, link = true }: { id: string; name?: string; role: "Vendor" | "Buyer"; link?: boolean }) {
   const content = (
     <>
       <VendorMark vendorId={id} className="size-4 rounded-sm" />
-      {role} <span className="font-mono">{shortId(id)}</span>
+      {role} {name ? <span className="text-muted">{name}</span> : <span className="font-mono">{shortId(id)}</span>}
     </>
   );
   if (!link || role !== "Vendor") return <span className="flex w-fit items-center gap-1.5 text-[13px] text-faint">{content}</span>;

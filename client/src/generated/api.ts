@@ -51,6 +51,7 @@ export interface OrderResponseDTO {
   /** @format int32 */
   id?: number;
   customerId?: string;
+  customerUsername?: string;
   /** @format date-time */
   purchasedAtUtc?: string;
   products?: OrderProductResponseDTO[];
@@ -63,6 +64,9 @@ export interface OrderProductResponseDTO {
   /** @format int32 */
   quantity?: number;
   vendorId?: string;
+  vendorUsername?: string;
+  /** @format decimal */
+  discountPercent?: number;
 }
 
 export interface OrderRequestDTO {
@@ -89,6 +93,7 @@ export interface ProductResponseDTO {
   /** @format int32 */
   categoryId?: number;
   vendorId?: string;
+  vendorUsername?: string;
   status?: string;
   isActive?: boolean;
   images?: ProductImageDTO[];

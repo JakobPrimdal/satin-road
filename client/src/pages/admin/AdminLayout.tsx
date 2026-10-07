@@ -42,7 +42,7 @@ export function AdminLayout() {
 function AdminHeader() {
   const { listings, refreshing, reload, status, error } = useAdmin();
   const { pathname } = useLocation();
-  const pending = listings.filter(p => p.status === "Pending").length;
+  const pending = listings.filter(p => p.status === "Pending" && p.isActive).length;
 
   const items = sections.map(section => ({
     ...section,
