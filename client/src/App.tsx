@@ -13,11 +13,13 @@ import { MarketPage } from "./pages/MarketPage";
 import { MyListingsPage } from "./pages/MyListingsPage";
 import { OrdersPage } from "./pages/OrdersPage";
 import { ProductPage } from "./pages/ProductPage";
+import { SeizedGuard } from "./components/SeizedGuard";
 import "./index.css";
 
 export function App() {
   return (
     <BrowserRouter>
+      <SeizedGuard />
       <Routes>
         <Route path="/" element={<AuthPage />} />
         <Route path="/market" element={<MarketLayout />}>

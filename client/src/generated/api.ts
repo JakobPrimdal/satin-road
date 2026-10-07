@@ -100,6 +100,7 @@ export interface ProductResponseDTO {
   /** @format date-time */
   restoredByAdminAtUtc?: string | null;
   adminNotice?: string | null;
+  vendorSeized?: boolean;
   images?: ProductImageDTO[];
 }
 

@@ -9,7 +9,7 @@ import { useSession } from "@/lib/session";
 import { ProductPhoto } from "./ProductPhoto";
 
 export function visibleResults(results: Product[], userId: string | undefined): Product[] {
-  return results.filter(product => product.status === "Approved" && product.isActive && product.vendorId !== userId);
+  return results.filter(product => product.status === "Approved" && product.isActive );
 }
 
 export function SearchBox() {

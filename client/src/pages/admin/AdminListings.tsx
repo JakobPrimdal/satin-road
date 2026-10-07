@@ -141,12 +141,14 @@ function ListingRow({ product, orderCount }: { product: Product; orderCount: num
           ) : (
             <span className="truncate text-[15px]">{product.title}</span>
           )}
-          {product.isActive ? (
+          {product.vendorSeized ? (
+              <span className="shrink-0 rounded border border-danger/40 px-1.5 py-px text-[11px] text-danger">Seized by FBI</span>
+          ) : product.isActive ? (
               <StatusPill status={product.status} />
           ) : (
               <span title="Paused or deleted by its vendor" className="shrink-0 rounded border border-line-strong px-1.5 py-px text-[11px] text-faint">
-                Inactive
-              </span>
+    Inactive
+  </span>
           )}
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
