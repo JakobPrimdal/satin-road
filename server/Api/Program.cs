@@ -37,6 +37,11 @@ builder.Services.AddScoped<AuthService>();
 
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
+builder.Services.AddSingleton<IRandomProvider, RandomProvider>();
+builder.Services.AddSingleton(
+    builder.Configuration.GetSection("Fbi").Get<FbiSettings>() ?? new FbiSettings(0.01));
+builder.Services.AddScoped<FbiService>();
+
 // ---------- error handling ----------
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();

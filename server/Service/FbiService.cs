@@ -1,42 +1,63 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Infrastructure;
+using Infrastructure.Entities;
 using LinqToDB;
 using LinqToDB.Async;
+using Service.Exceptions;
 
 namespace Service;
 
 public record FbiSettings(double RaidChance);
 
-public class FbiService(MyDbConnection db, IRandomProvider random, FbiSettings settings)
+public class FbiService(LoginDb loginDb, ProductDb productDb, IRandomProvider random, FbiSettings settings)
 {
-    
-    public async Task<bool> RollForRaid(string vendorId)
-    {
-        
-        if (random.NextDouble() >= settings.RaidChance)
-            return false;   
+    // True with a chance of RaidChance (0.01 = 1%)
+    public bool ShouldRaid() => random.NextDouble() < settings.RaidChance;
 
-        await RaidVendor(vendorId);
+    // Called once per vendor for every order. Returns true if the vendor got seized now.
+    public bool RollForRaid(string vendorId)
+    {
+        if (!ShouldRaid())
+            return false;
+
+        var vendor = loginDb.Users.FirstOrDefault(u => u.UserId == vendorId);
+        if (vendor is null || vendor.Role == Roles.Admin || !vendor.IsActive)
+            return false; // never raid admins, and don't raid twice
+
+        Seize(vendorId);
         return true;
     }
-    
-    public async Task RaidVendor(string vendorId)
+
+    // Manual raid by an admin (testing / demo)
+    public void RaidVendor(string vendorId)
     {
-        var vendor = await db.Users.FirstOrDefaultAsync(u => u.UserId == vendorId)
-                     ?? throw new KeyNotFoundException("Vendor not found");
+        var vendor = loginDb.Users.FirstOrDefault(u => u.UserId == vendorId)
+                     ?? throw new NotFoundException("Vendor with id = " + vendorId + " was not found.");
 
         if (vendor.Role == Roles.Admin)
-            throw new ValidationException("The FBI can't raid an admin");
+            throw new BadRequestException("The FBI can't raid an admin.");
 
         if (!vendor.IsActive)
-            return;   // already seized, nothing to do
+            throw new BadRequestException("This vendor has already been seized.");
 
-        
-        await db.Users
+        Seize(vendorId);
+    }
+
+    public bool IsSeized(string userId) =>
+        loginDb.Users.Any(u => u.UserId == userId && !u.IsActive);
+
+    // Account can't log in anymore, and all products go off the market
+    private void Seize(string vendorId)
+    {
+        loginDb.Users
             .Where(u => u.UserId == vendorId)
             .Set(u => u.IsActive, false)
-            .UpdateAsync();
+            .Update();
 
-        // TODO sfter product is there
+        productDb.Products()
+            .Where(p => p.VendorId == vendorId)
+            .Set(p => p.IsActive, false)
+            .Set(p => p.UpdatedAtUtc, DateTime.UtcNow)
+            .Update();
     }
 }
