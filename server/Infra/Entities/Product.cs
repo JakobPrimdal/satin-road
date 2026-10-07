@@ -21,6 +21,10 @@ public class Product
     
     [Column] [NotNull] public bool IsDeleted { get; set; } = false; 
     
+    [Column] public DateTime? RestoredByAdminAtUtc { get; set; }
+    
+    [Column] public string? AdminNotice { get; set; } 
+    
     [Association(ThisKey = nameof(Id), OtherKey = nameof(ProductImage.ProductId))]
     public IEnumerable<ProductImage> Images { get; set; } = [];
 }

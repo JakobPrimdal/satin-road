@@ -159,22 +159,45 @@ public class ProductService: IProductService
             .Set(p => p.UpdatedAtUtc, DateTime.UtcNow)
             .Update();
     }
-
+    
     public ProductResponseDTO SetProductActive(int id, bool isActive, string callerId, bool isAdmin)
     {
-        Product? product = db.Products().FirstOrDefault(p => p.Id == id && !p.IsDeleted);
+        Product? product = db.Products().FirstOrDefault(p => p.Id == id && (isAdmin || !p.IsDeleted));
         if (product is null)
             throw new NotFoundException("Product with id = " + id + " was not found.");
 
         if (!isAdmin && product.VendorId != callerId)
             throw new ForbiddenException("You do not have permission to modify this product.");
+        
+        bool byAdmin = isAdmin && product.VendorId != callerId;
 
-        db.Products()
+        var update = db.Products()
             .Where(p => p.Id == id)
-            .Set(p => p.IsActive, isActive)
-            .Set(p => p.UpdatedAtUtc, DateTime.UtcNow)
-            .Update();
+            .Set(p => p.UpdatedAtUtc, DateTime.UtcNow);
 
+        if (byAdmin && isActive && product.IsDeleted)
+        {
+            update = update
+                .Set(p => p.IsDeleted, false)
+                .Set(p => p.IsActive, false)
+                .Set(p => p.RestoredByAdminAtUtc, DateTime.UtcNow)
+                .Set(p => p.AdminNotice, "Restored");
+        }
+        else if (byAdmin && isActive)
+        {
+            update = update
+                .Set(p => p.IsActive, true)
+                .Set(p => p.RestoredByAdminAtUtc, (DateTime?)null)
+                .Set(p => p.AdminNotice, "Reactivated");
+        }
+        else
+        {
+            update = update
+                .Set(p => p.IsActive, isActive)
+                .Set(p => p.RestoredByAdminAtUtc, (DateTime?)null);
+        }
+
+        update.Update();
         return GetProduct(id, callerId, isAdmin);
     }
     
@@ -296,6 +319,8 @@ public class ProductService: IProductService
         VendorUsername = usernames.GetValueOrDefault(p.VendorId, ""),
         Status = p.Status,
         IsActive = p.IsActive,
+        RestoredByAdminAtUtc = p.RestoredByAdminAtUtc,
+        AdminNotice = p.AdminNotice,
         Images = p.Images.Select(i => new ProductImageDTO
         {
             Id = i.Id,
@@ -340,5 +365,12 @@ public class ProductService: IProductService
             .Update();
 
         return GetProduct(id, callerId, isAdmin);
+    }
+    public void ClearAdminNotices(string vendorId)
+    {
+        db.Products()
+            .Where(p => p.VendorId == vendorId && p.AdminNotice != null)
+            .Set(p => p.AdminNotice, (string?)null)
+            .Update();
     }
 }

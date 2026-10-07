@@ -33,4 +33,7 @@ public interface IProductService
     public ProductResponseDTO SetProductActive(int id, bool isActive, string callerId, bool isAdmin);
 
     public ProductResponseDTO UpdateStock(int id, int stock, string callerId, bool isAdmin);
+    
+    public void ClearAdminNotices(string vendorId);
+    
 }

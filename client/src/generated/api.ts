@@ -96,6 +96,9 @@ export interface ProductResponseDTO {
   vendorUsername?: string;
   status?: string;
   isActive?: boolean;
+  /** @format date-time */
+  restoredByAdminAtUtc?: string | null;
+  adminNotice?: string | null;
   images?: ProductImageDTO[];
 }
 
@@ -990,6 +993,23 @@ export class Api<
         path: `/DeleteImage`,
         method: "DELETE",
         query: query,
+        secure: true,
+        ...params,
+      }),
+  };
+  clearAdminNotices = {
+    /**
+     * No description
+     *
+     * @tags Product
+     * @name ProductClearAdminNotices
+     * @request POST:/ClearAdminNotices
+     * @secure
+     */
+    productClearAdminNotices: (params: RequestParams = {}) =>
+      this.request<Blob, any>({
+        path: `/ClearAdminNotices`,
+        method: "POST",
         secure: true,
         ...params,
       }),
