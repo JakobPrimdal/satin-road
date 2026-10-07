@@ -51,6 +51,7 @@ export interface Product {
   stock: number;
   categoryId: number;
   vendorId: string;
+  vendorUsername: string;
   status: string;
   isActive: boolean;
   images: ProductImage[];
@@ -64,8 +65,9 @@ export interface OrderLine {
 export interface Order {
   id: number;
   customerId: string;
+  customerUsername: string;
   purchasedAt: Date;
-  items: { productId: number; title: string; quantity: number; vendorId: string }[];
+  items: { productId: number; title: string; quantity: number; vendorId: string; vendorUsername: string; discountPercent: number }[];
 }
 
 export interface ListingInput {
@@ -128,6 +130,7 @@ function toProduct(dto: ProductResponseDTO): Product {
     stock: dto.stock ?? 0,
     categoryId: dto.categoryId ?? 0,
     vendorId: dto.vendorId ?? "",
+    vendorUsername: dto.vendorUsername ?? "",
     status: dto.status ?? "",
     isActive: dto.isActive ?? true,
     images: (dto.images ?? [])
@@ -165,12 +168,15 @@ function toOrder(dto: OrderResponseDTO): Order {
   return {
     id: dto.id ?? 0,
     customerId: dto.customerId ?? "",
+    customerUsername: dto.customerUsername ?? "",
     purchasedAt: parseUtc(dto.purchasedAtUtc),
     items: (dto.products ?? []).map(item => ({
       productId: item.productId ?? 0,
       title: item.productTitle ?? "",
       quantity: item.quantity ?? 0,
       vendorId: item.vendorId ?? "",
+      vendorUsername: item.vendorUsername ?? "",
+      discountPercent: item.discountPercent ?? 0,
     })),
   };
 }
@@ -229,10 +235,10 @@ export const updateCategory = (id: number, name: string) =>
 export const deleteCategory = (id: number) => call(() => api.deleteCategory.categoryDeleteCategory({ id }, { format: "json" }));
 
 export const getAllProducts = () =>
-    call(() => api.getAllProducts.productGetAllProducts()).then(list => list.map(toProduct));
+  call(() => api.getAllProducts.productGetAllProducts()).then(list => list.map(toProduct));
 
 export const setProductActive = (id: number, isActive: boolean) =>
-    call(() => api.setProductActive.productSetProductActive({ id, isActive })).then(toProduct);
+  call(() => api.setProductActive.productSetProductActive({ id, isActive })).then(toProduct);
 
 export const updateStock = (id: number, stock: number) =>
-    call(() => api.updateStock.productUpdateStock({ id, stock })).then(toProduct);
+  call(() => api.updateStock.productUpdateStock({ id, stock })).then(toProduct);

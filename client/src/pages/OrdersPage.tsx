@@ -97,10 +97,23 @@ export function OrdersPage() {
                           className="mt-1 flex w-fit items-center gap-1.5 rounded text-[13px] text-faint underline-offset-4 outline-none hover:text-muted hover:underline focus-visible:underline"
                         >
                           <VendorMark vendorId={item.vendorId} className="size-4 rounded-sm" />
-                          Vendor <span className="font-mono">{shortId(item.vendorId)}</span>
+                          {item.vendorUsername ? (
+                            <>Sold by {item.vendorUsername}</>
+                          ) : (
+                            <>
+                              Vendor <span className="font-mono">{shortId(item.vendorId)}</span>
+                            </>
+                          )}
                         </Link>
                       </span>
-                      <span className="shrink-0 text-muted">× {item.quantity}</span>
+                      <span className="flex shrink-0 items-center gap-3">
+                        {item.discountPercent > 0 && (
+                          <span className="rounded border border-accent/30 px-1.5 py-px text-[11px] text-accent">
+                            {item.discountPercent}% off
+                          </span>
+                        )}
+                        <span className="text-muted">× {item.quantity}</span>
+                      </span>
                     </li>
                   );
                 })}

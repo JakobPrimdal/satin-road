@@ -19,41 +19,32 @@ public class ProductService: IProductService
     
     public List<ProductResponseDTO> GetProducts(string callerId)
     {
-        return db.Products()
+        return ToDtos(db.Products()
             .LoadWith(p => p.Images)
             .Where(p => p.Status == ProductStatus.Approved && p.IsActive && p.VendorId != callerId)
-            .ToList()
-            .Select(ToDto)
-            .ToList();
+            .ToList());
     }
 
     public List<ProductResponseDTO> GetMyProducts(string callerId)
     {
-        return db.Products()
+        return ToDtos(db.Products()
             .LoadWith(p => p.Images)
             .Where(p => p.VendorId == callerId && !p.IsDeleted)
-            .ToList()
-            .Select(ToDto)
-            .ToList();
+            .ToList());
     }
     public List<ProductResponseDTO> GetAllProducts()
     {
-        return db.Products()
+        return ToDtos(db.Products()
             .LoadWith(p => p.Images)
-            .Where(p => p.IsActive && !p.IsDeleted)
-            .ToList()
-            .Select(ToDto)
-            .ToList();
+            .ToList());
     }
 
     public List<ProductResponseDTO> GetPendingProducts()
     {
-        return db.Products()
+        return ToDtos(db.Products()
             .LoadWith(p => p.Images)
             .Where(p => p.Status == ProductStatus.Pending && p.IsActive)
-            .ToList()
-            .Select(ToDto)
-            .ToList();
+            .ToList());
     }
 
     public ProductResponseDTO GetProduct(int id, string callerId, bool isAdmin)
@@ -82,7 +73,7 @@ public class ProductService: IProductService
                         && (p.Title.Contains(search) || p.Description.Contains(search)))
             .ToList();
 
-        return matches.Select(ToDto).ToList();
+        return ToDtos(matches);
     }
 
     public ProductResponseDTO CreateProduct(ProductRequestDTO dto, string vendorId, bool isAdmin)
@@ -277,7 +268,23 @@ public class ProductService: IProductService
             throw new BadRequestException("Category with id = " + categoryId + " does not exist.");
     }
     
-    private static ProductResponseDTO ToDto(Product p) => new()
+    private Dictionary<string, string> UsernamesFor(IEnumerable<string> userIds)
+    {
+        var ids = userIds.Distinct().ToList();
+        return loginDb.Users
+            .Where(u => ids.Contains(u.UserId))
+            .ToDictionary(u => u.UserId, u => u.Username);
+    }
+
+    private List<ProductResponseDTO> ToDtos(List<Product> products)
+    {
+        var usernames = UsernamesFor(products.Select(p => p.VendorId));
+        return products.Select(p => ToDto(p, usernames)).ToList();
+    }
+
+    private ProductResponseDTO ToDto(Product p) => ToDto(p, UsernamesFor([p.VendorId]));
+
+    private static ProductResponseDTO ToDto(Product p, IReadOnlyDictionary<string, string> usernames) => new()
     {
         Id = p.Id,
         Title = p.Title,
@@ -286,6 +293,7 @@ public class ProductService: IProductService
         Stock = p.Stock,
         CategoryId = p.CategoryId,
         VendorId = p.VendorId,
+        VendorUsername = usernames.GetValueOrDefault(p.VendorId, ""),
         Status = p.Status,
         IsActive = p.IsActive,
         Images = p.Images.Select(i => new ProductImageDTO

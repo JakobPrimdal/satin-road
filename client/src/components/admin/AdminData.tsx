@@ -3,10 +3,7 @@ import {
   ApiError,
   getAllProducts,
   getCategories,
-  getMyProducts,
   getOrders,
-  getPendingProducts,
-  getProducts,
   type Category,
   type Order,
   type Product,
@@ -41,18 +38,9 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const reload = useCallback(async () => {
     setRefreshing(true);
     try {
-      const [nextCategories, live, pending, mine, all, nextOrders] = await Promise.all([
-        getCategories(),
-        getProducts(),
-        getPendingProducts(),
-        getMyProducts(),
-        getAllProducts(),
-        getOrders(),
-      ]);
-      const byId = new Map<number, Product>();
-      [...live, ...pending, ...mine, ...all].forEach(product => byId.set(product.id, product));
+      const [nextCategories, all, nextOrders] = await Promise.all([getCategories(), getAllProducts(), getOrders()]);
       setCategoriesState(nextCategories);
-      setListings([...byId.values()].filter(p => p.isActive).sort((a, b) => b.id - a.id));
+      setListings(all.sort((a, b) => b.id - a.id));
       setOrders(nextOrders.sort((a, b) => b.id - a.id));
       setError(null);
       setStatus("ready");
