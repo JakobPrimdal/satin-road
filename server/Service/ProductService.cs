@@ -21,7 +21,7 @@ public class ProductService: IProductService
     {
         return ToDtos(db.Products()
             .LoadWith(p => p.Images)
-            .Where(p => p.Status == ProductStatus.Approved && p.IsActive && p.VendorId != callerId)
+            .Where(p => p.Status == ProductStatus.Approved && p.IsActive )
             .ToList());
     }
 
@@ -69,7 +69,7 @@ public class ProductService: IProductService
 
         List<Product> matches = db.Products()
             .LoadWith(p => p.Images)
-            .Where(p => p.Status == ProductStatus.Approved && p.IsActive && p.VendorId != callerId
+            .Where(p => p.Status == ProductStatus.Approved && p.IsActive
                         && (p.Title.Contains(search) || p.Description.Contains(search)))
             .ToList();
 
@@ -98,6 +98,16 @@ public class ProductService: IProductService
         product.Id = db.InsertWithInt32Identity(product);
 
         return ToDto(product);
+    }
+    
+    // Seized accounts can't change anything, even with an old login token.
+    // Also catches a token for a user that no longer exists 
+    private void EnsureNotSeized(string userId)
+    {
+        var user = loginDb.Users.FirstOrDefault(u => u.UserId == userId)
+                   ?? throw new UnauthorizedException("Your session is no longer valid. Please log in again.");
+        if (!user.IsActive)
+            throw new ForbiddenException("This account has been seized by the FBI.");
     }
 
     public ProductResponseDTO UpdateProduct(int id, ProductRequestDTO dto, string callerId, bool isAdmin)
@@ -168,6 +178,9 @@ public class ProductService: IProductService
 
         if (!isAdmin && product.VendorId != callerId)
             throw new ForbiddenException("You do not have permission to modify this product.");
+     
+        if (isActive && loginDb.Users.Any(u => u.UserId == product.VendorId && !u.IsActive))
+            throw new BadRequestException("This vendor has been seized by the FBI. Their listings can't be reactivated.");
         
         bool byAdmin = isAdmin && product.VendorId != callerId;
 
@@ -224,6 +237,7 @@ public class ProductService: IProductService
     
     public List<ProductImageDTO> AddImages(int productId, List<ProductImageDataDTO> files, string callerId, bool isAdmin)
     {
+        EnsureNotSeized(callerId);
         var product = db.Products().FirstOrDefault(p => p.Id == productId);
         if (product is null)
             throw new NotFoundException("Product with id = " + productId + " was not found.");
@@ -298,16 +312,27 @@ public class ProductService: IProductService
             .Where(u => ids.Contains(u.UserId))
             .ToDictionary(u => u.UserId, u => u.Username);
     }
+    private HashSet<string> SeizedVendorsFor(IEnumerable<string> userIds)
+    {
+        var ids = userIds.Distinct().ToList();
+        return loginDb.Users
+            .Where(u => ids.Contains(u.UserId) && !u.IsActive)
+            .Select(u => u.UserId)
+            .ToHashSet();
+    }
+
 
     private List<ProductResponseDTO> ToDtos(List<Product> products)
     {
-        var usernames = UsernamesFor(products.Select(p => p.VendorId));
-        return products.Select(p => ToDto(p, usernames)).ToList();
+        var vendorIds = products.Select(p => p.VendorId).ToList();
+        var usernames = UsernamesFor(vendorIds);
+        var seized = SeizedVendorsFor(vendorIds);
+        return products.Select(p => ToDto(p, usernames, seized)).ToList();
     }
 
-    private ProductResponseDTO ToDto(Product p) => ToDto(p, UsernamesFor([p.VendorId]));
+    private ProductResponseDTO ToDto(Product p) => ToDtos([p])[0];
 
-    private static ProductResponseDTO ToDto(Product p, IReadOnlyDictionary<string, string> usernames) => new()
+    private static ProductResponseDTO ToDto(Product p, IReadOnlyDictionary<string, string> usernames, IReadOnlySet<string> seized) => new()
     {
         Id = p.Id,
         Title = p.Title,
@@ -317,6 +342,7 @@ public class ProductService: IProductService
         CategoryId = p.CategoryId,
         VendorId = p.VendorId,
         VendorUsername = usernames.GetValueOrDefault(p.VendorId, ""),
+        VendorSeized = seized.Contains(p.VendorId),
         Status = p.Status,
         IsActive = p.IsActive,
         RestoredByAdminAtUtc = p.RestoredByAdminAtUtc,

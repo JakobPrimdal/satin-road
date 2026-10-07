@@ -6,5 +6,7 @@ public class OrderResponseDTO
     public string CustomerId { get; set; } = "";
     public string CustomerUsername { get; set; } = "";
     public DateTime PurchasedAtUtc { get; set; }
+    
+    public List<string> RaidedVendors { get; set; } = [];
     public List<OrderProductResponseDTO> Products { get; set; } = [];
 }
