@@ -736,6 +736,24 @@ export class Api<
         ...params,
       }),
   };
+  getFeaturedProducts = {
+    /**
+     * No description
+     *
+     * @tags Product
+     * @name ProductGetFeaturedProducts
+     * @request GET:/GetFeaturedProducts
+     * @secure
+     */
+    productGetFeaturedProducts: (params: RequestParams = {}) =>
+      this.request<ProductResponseDTO[], any>({
+        path: `/GetFeaturedProducts`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+  };
   getProduct = {
     /**
      * No description

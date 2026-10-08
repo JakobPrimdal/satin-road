@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { useAdmin } from "@/components/admin/AdminData";
-import { ActionButton, EmptyState, LoadingRows, PageHeader, Person, StatusPill } from "@/components/admin/parts";
+import { ActionButton, EmptyState, LoadingRows, PageHeader, Pagination, Person, StatusPill, paginate, usePageParam } from "@/components/admin/parts";
 import { useApproval } from "@/components/admin/useApproval";
 import { SearchIcon } from "@/components/icons";
 import { ProductPhoto } from "@/components/market/ProductPhoto";
 import { Button } from "@/components/ui";
 import { ApiError, deleteProduct, setProductActive, type Product } from "@/lib/api";
 import { formatPrice, plural, primaryImage, stockLabel, stockTone } from "@/lib/format";
+
+const PAGE_SIZE = 20;
 
 const filters = [
   { value: "all", label: "All", test: () => true },
@@ -21,6 +23,7 @@ export function AdminListings() {
   const admin = useAdmin();
   const [params, setParams] = useSearchParams();
   const [query, setQuery] = useState("");
+  const { page, resetPage } = usePageParam();
   const filter = filters.find(f => f.value === params.get("status")) ?? filters[0];
 
   if (admin.status === "loading") return <LoadingRows count={5} />;
@@ -41,6 +44,7 @@ export function AdminListings() {
     p => !term || p.title.toLowerCase().includes(term) || p.vendorUsername.toLowerCase().includes(term) || p.vendorId.startsWith(term),
   );
   const visible = matches.filter(filter.test);
+  const paged = paginate(visible, page, PAGE_SIZE);
 
   return (
     <>
@@ -68,7 +72,10 @@ export function AdminListings() {
           <input
             type="search"
             value={query}
-            onChange={event => setQuery(event.target.value)}
+            onChange={event => {
+              setQuery(event.target.value);
+              resetPage();
+            }}
             placeholder="Search by title or vendor"
             className="h-10 w-full rounded-lg border border-line bg-field pr-3 pl-9 text-sm text-fg caret-accent outline-none transition-[border-color,box-shadow] placeholder:text-faint hover:border-line-strong focus:border-accent/60 focus:ring-3 focus:ring-accent/10 any-pointer-coarse:text-base"
           />
@@ -78,11 +85,14 @@ export function AdminListings() {
       {visible.length === 0 ? (
         <EmptyState title="No listings match." body="Try another status or search." />
       ) : (
-        <ul className="divide-y divide-line border-y border-line">
-          {visible.map(product => (
-            <ListingRow key={product.id} product={product} orderCount={orderCounts.get(product.id) ?? 0} />
-          ))}
-        </ul>
+        <>
+          <ul className="divide-y divide-line border-y border-line">
+            {paged.items.map(product => (
+              <ListingRow key={product.id} product={product} orderCount={orderCounts.get(product.id) ?? 0} />
+            ))}
+          </ul>
+          <Pagination paged={paged} noun="listing" />
+        </>
       )}
     </>
   );

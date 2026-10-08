@@ -181,6 +181,9 @@ export const getUsers = () => call(() => api.getUsers.userGetUsers()).then(list 
 export const setUserBlocked = (userId: string, blocked: boolean) =>
     call(() => api.setUserBlocked.userSetUserBlocked({ userId, blocked })).then(toAdminUser);
 
+export const raidVendor = (vendorId: string) =>
+    call(() => api.raidVendor.fbiRaidVendor({ vendorId }, { format: "json" }));
+
 
 export const getMe = () => call(() => api.getMe.authGetMe());
 export const register = (credentials: Credentials) =>
@@ -196,6 +199,8 @@ export const getCategories = () => call(() => api.getCategories.categoryGetCateg
 export const getProducts = () => call(() => api.getProducts.productGetProducts()).then(list => list.map(toProduct));
 
 export const getProduct = (id: number) => call(() => api.getProduct.productGetProduct({ id })).then(toProduct);
+
+export const getFeaturedProducts = () => call(() => api.getFeaturedProducts.productGetFeaturedProducts()).then(list => list.map(toProduct));
 
 export const searchProducts = (search: string, signal?: AbortSignal) =>
   call(() => api.searchProducts.productSearchProducts({ search }, { signal })).then(list => list.map(toProduct));
@@ -229,7 +234,7 @@ function toOrder(dto: OrderResponseDTO): Order {
 export const placeOrder = (lines: OrderLine[]) =>
   call(() =>
     api.placeOrder.orderPlaceOrder({
-      products: lines.map(line => ({ productid: line.productId, quantity: line.quantity })),
+      products: lines.map(line => ({ productId: line.productId, quantity: line.quantity })),
     }),
   ).then(toOrder);
 

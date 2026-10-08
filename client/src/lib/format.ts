@@ -49,10 +49,3 @@ export function sortProducts(products: Product[], sort: SortKey): Product[] {
   else sorted.sort((a, b) => b.id - a.id);
   return sorted;
 }
-
-export function pickFeatured(products: Product[], count = 5): Product[] {
-  return products
-    .filter(product => product.images.length > 0 && product.stock > 0)
-    .sort((a, b) => b.id - a.id)
-    .slice(0, count);
-}

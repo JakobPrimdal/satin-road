@@ -1,8 +1,9 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
+import { ChevronLeftIcon, ChevronRightIcon } from "@/components/icons";
 import { VendorMark } from "@/components/market/VendorMark";
 import { Spinner } from "@/components/ui";
-import { shortId } from "@/lib/format";
+import { plural, shortId } from "@/lib/format";
 
 export function PageHeader({ title, description, children }: { title: string; description?: ReactNode; children?: ReactNode }) {
   return (
@@ -85,5 +86,124 @@ export function ActionButton({
       {busy && <Spinner />}
       {children}
     </button>
+  );
+}
+
+export function usePageParam() {
+  const [params, setParams] = useSearchParams();
+  const page = Math.max(1, Math.floor(Number(params.get("page"))) || 1);
+
+  function resetPage() {
+    if (!params.has("page")) return;
+    setParams(
+      current => {
+        const next = new URLSearchParams(current);
+        next.delete("page");
+        return next;
+      },
+      { replace: true },
+    );
+  }
+
+  return { page, resetPage };
+}
+
+export interface Paged<T> {
+  items: T[];
+  page: number;
+  count: number;
+  start: number;
+  total: number;
+}
+
+export function paginate<T>(items: T[], requested: number, size: number): Paged<T> {
+  const count = Math.max(1, Math.ceil(items.length / size));
+  const page = Math.min(requested, count);
+  const start = (page - 1) * size;
+  return { items: items.slice(start, start + size), page, count, start, total: items.length };
+}
+
+function pageList(page: number, count: number): (number | "gap")[] {
+  const wanted = new Set([1, count, page - 1, page, page + 1]);
+  if (page <= 4) [2, 3, 4, 5].forEach(p => wanted.add(p));
+  if (page >= count - 3) [count - 4, count - 3, count - 2, count - 1].forEach(p => wanted.add(p));
+  const pages = [...wanted].filter(p => p >= 1 && p <= count).sort((a, b) => a - b);
+
+  const list: (number | "gap")[] = [];
+  pages.forEach((p, i) => {
+    const previous = pages[i - 1];
+    if (previous !== undefined && p - previous === 2) list.push(previous + 1);
+    else if (previous !== undefined && p - previous > 2) list.push("gap");
+    list.push(p);
+  });
+  return list;
+}
+
+const pageLinkClass =
+  "inline-flex h-8 min-w-8 items-center justify-center rounded-md px-2 text-[13px] tabular-nums text-muted outline-none transition-colors hover:bg-field hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/40 aria-[current=page]:bg-raised aria-[current=page]:text-fg";
+
+export function Pagination<T>({ paged, noun, nouns }: { paged: Paged<T>; noun: string; nouns?: string }) {
+  const [params] = useSearchParams();
+  const { page, count, start, total, items } = paged;
+  if (count <= 1) return null;
+
+  function to(p: number) {
+    const next = new URLSearchParams(params);
+    if (p <= 1) next.delete("page");
+    else next.set("page", String(p));
+    const search = next.toString();
+    return { search: search ? `?${search}` : "" };
+  }
+
+  const toTop = () => window.scrollTo(0, 0);
+
+  function step(target: number, label: string, icon: ReactNode) {
+    if (target < 1 || target > count) {
+      return (
+        <span aria-disabled="true" aria-label={label} className={`${pageLinkClass} pointer-events-none opacity-40`}>
+          {icon}
+        </span>
+      );
+    }
+    return (
+      <Link to={to(target)} onClick={toTop} aria-label={label} className={pageLinkClass}>
+        {icon}
+      </Link>
+    );
+  }
+
+  return (
+    <nav aria-label="Pages" className="mt-8 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+      <p className="text-[13px] text-muted tabular-nums">
+        {start + 1}–{start + items.length} of {plural(total, noun, nouns)}
+      </p>
+      <div className="flex items-center gap-1">
+        {step(page - 1, "Previous page", <ChevronLeftIcon className="size-4" />)}
+        <span className="px-2 text-[13px] text-muted tabular-nums sm:hidden">
+          Page {page} of {count}
+        </span>
+        <div className="hidden items-center gap-1 sm:flex">
+          {pageList(page, count).map((p, i) =>
+            p === "gap" ? (
+              <span key={`gap-${i}`} aria-hidden="true" className="w-6 text-center text-[13px] text-faint">
+                …
+              </span>
+            ) : (
+              <Link
+                key={p}
+                to={to(p)}
+                onClick={toTop}
+                aria-current={p === page ? "page" : undefined}
+                aria-label={`Page ${p}`}
+                className={pageLinkClass}
+              >
+                {p}
+              </Link>
+            ),
+          )}
+        </div>
+        {step(page + 1, "Next page", <ChevronRightIcon className="size-4" />)}
+      </div>
+    </nav>
   );
 }

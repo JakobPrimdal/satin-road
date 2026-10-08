@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router";
 import { useAdmin } from "@/components/admin/AdminData";
-import { ActionButton, EmptyState, LoadingRows, PageHeader } from "@/components/admin/parts";
+import { ActionButton, EmptyState, LoadingRows, PageHeader, Pagination, paginate, usePageParam } from "@/components/admin/parts";
 import { Button, Spinner } from "@/components/ui";
 import { ApiError, createCategory, deleteCategory, updateCategory, type Category } from "@/lib/api";
 import { plural } from "@/lib/format";
+
+const PAGE_SIZE = 20;
 
 const inputClass =
   "h-10 w-full rounded-lg border border-line bg-field px-3 text-[15px] text-fg caret-accent outline-none transition-[border-color,box-shadow] placeholder:text-faint hover:border-line-strong focus:border-accent/60 focus:ring-3 focus:ring-accent/10 any-pointer-coarse:text-base";
@@ -21,6 +23,7 @@ export function AdminCategories() {
   const [name, setName] = useState("");
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+  const { page } = usePageParam();
 
   if (admin.status === "loading") return <LoadingRows count={6} height="h-14" />;
   if (admin.status === "error") {
@@ -55,6 +58,7 @@ export function AdminCategories() {
 
   const counts = new Map<number, number>();
   admin.listings.forEach(p => counts.set(p.categoryId, (counts.get(p.categoryId) ?? 0) + 1));
+  const paged = paginate(admin.categories, page, PAGE_SIZE);
 
   return (
     <>
@@ -88,11 +92,14 @@ export function AdminCategories() {
       {admin.categories.length === 0 ? (
         <EmptyState title="No categories yet." body="Vendors need at least one category before they can list anything." />
       ) : (
-        <ul className="divide-y divide-line border-y border-line">
-          {admin.categories.map(category => (
-            <CategoryRow key={category.id} category={category} count={counts.get(category.id) ?? 0} />
-          ))}
-        </ul>
+        <>
+          <ul className="divide-y divide-line border-y border-line">
+            {paged.items.map(category => (
+              <CategoryRow key={category.id} category={category} count={counts.get(category.id) ?? 0} />
+            ))}
+          </ul>
+          <Pagination paged={paged} noun="category" nouns="categories" />
+        </>
       )}
     </>
   );
