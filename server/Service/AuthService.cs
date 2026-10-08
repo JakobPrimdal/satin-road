@@ -52,7 +52,10 @@ public class AuthService (LoginDb db,TokenService tokenService,IPasswordHasher p
         // When FBI blocks
         if (!user.IsActive)
             throw new UnauthorizedException("This account has been seized by the FBI");
-
+       
+        // When an admin blocks
+        if (user.IsBlocked)
+            throw new UnauthorizedException("Your account has been blocked by Satin Road.");
         return new LoginResponseDto(tokenService.CreateToken(user), new UserDto(user));
     }
     public async Task<UserDto> GetUser(string userId)

@@ -64,7 +64,9 @@ public class OrderService : IOrderService
 
             if (product is null)
                 throw new NotFoundException("Product with id = " + requestProduct.Productid + " was not found.");
-
+           
+            if (orderDb.GetTable<User>().Any(u => u.UserId == product.VendorId && u.IsBlocked))
+                throw new NotFoundException("Product with id = " + requestProduct.Productid + " was not found.");
             if (product.VendorId == customerId)
                 throw new BadRequestException("You cannot order your own product (product id = " +
                                               requestProduct.Productid + ").");
