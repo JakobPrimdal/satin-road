@@ -21,6 +21,7 @@ interface Placed {
   total: number;
   saved: number;
   units: number;
+  raided: string[];
 }
 
 function usePriorOrders() {
@@ -82,7 +83,7 @@ export function CartPage() {
       );
       wallet.spend(charged);
       cart.removeAll(payable.map(r => r.line.productId));
-      setPlaced({ orderId: order.id, total: charged, saved: roundBtc(subtotal - charged), units });
+      setPlaced({ orderId: order.id, total: charged, saved: roundBtc(subtotal - charged), units, raided: order.raidedVendors });
       market.reload();
     } catch (err) {
       setNotice({ tone: "danger", text: err instanceof ApiError ? err.message : "Something went wrong." });
@@ -106,6 +107,11 @@ export function CartPage() {
           </p>
           {placed.saved > 0 && (
             <p className="mt-2 text-[15px] text-accent">Your loyalty discount saved you {formatPrice(placed.saved)}.</p>
+          )}
+          {placed.raided.length > 0 && (
+              <p className="mt-2 text-[15px] text-danger">
+                The FBI raided {placed.raided.join(", ")} right after your purchase. Their shop has been shut down.
+              </p>
           )}
           <div className="mt-8 flex justify-center gap-6 text-[15px]">
             <Link to="/market/orders" className={linkClass}>

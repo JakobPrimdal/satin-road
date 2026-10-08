@@ -5,7 +5,7 @@ import { formatPrice, primaryImage, stockLabel, stockTone } from "@/lib/format";
 import { useCart } from "@/lib/local";
 import { useMarket } from "./MarketData";
 import { ProductPhoto } from "./ProductPhoto";
-import {useSession} from "@/lib/session.ts";
+import {useSession} from "@/lib/session";
 
 export function ProductCard({ product, lead = false }: { product: Product; lead?: boolean }) {
   const { categoryName } = useMarket();

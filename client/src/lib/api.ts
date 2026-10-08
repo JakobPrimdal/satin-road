@@ -70,6 +70,7 @@ export interface Order {
   customerId: string;
   customerUsername: string;
   purchasedAt: Date;
+  raidedVendors: string[];
   items: { productId: number; title: string; quantity: number; vendorId: string; vendorUsername: string; discountPercent: number }[];
 }
 
@@ -180,6 +181,7 @@ function toOrder(dto: OrderResponseDTO): Order {
     customerId: dto.customerId ?? "",
     customerUsername: dto.customerUsername ?? "",
     purchasedAt: parseUtc(dto.purchasedAtUtc),
+    raidedVendors: dto.raidedVendors ?? [],
     items: (dto.products ?? []).map(item => ({
       productId: item.productId ?? 0,
       title: item.productTitle ?? "",

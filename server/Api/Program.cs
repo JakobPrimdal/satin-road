@@ -194,8 +194,6 @@ app.UseSwaggerUi();
 
 app.UseAuthentication();
 
-app.UseAuthentication();
-
 // a seized user gets refused on every request
 app.Use(async (context, next) =>
 {
@@ -223,7 +221,6 @@ app.Use(async (context, next) =>
     await next();
 });
 
-app.UseAuthorization();
 app.UseAuthorization();
 
 app.MapControllers();
