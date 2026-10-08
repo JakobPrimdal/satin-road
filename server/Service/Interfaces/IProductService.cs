@@ -12,6 +12,8 @@ public interface IProductService
     
     public List<ProductResponseDTO> GetPendingProducts();
 
+    public List<ProductResponseDTO> GetFeaturedProducts();
+
     public ProductResponseDTO GetProduct(int id, string callerId, bool isAdmin);
 
     public List<ProductResponseDTO> SearchProducts(string search, string callerId);

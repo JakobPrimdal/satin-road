@@ -48,6 +48,32 @@ public class ProductService: IProductService
             .ToList());
     }
 
+    public List<ProductResponseDTO> GetFeaturedProducts()
+    {
+        var unitsSold = db.GetTable<OrderProduct>()
+            .GroupBy(op => op.ProductId)
+            .Select(g => new { ProductId = g.Key, UnitsSold = g.Sum(op => op.Quantity) })
+            .Where(x => x.UnitsSold > 100)
+            .ToDictionary(x => x.ProductId, x => x.UnitsSold);
+
+        var productIds = unitsSold.Keys.ToList();
+        var blocked = BlockedVendorIds();
+
+        var featured = db.Products()
+            .LoadWith(p => p.Images)
+            .Where(p => productIds.Contains(p.Id)
+                        && p.Status == ProductStatus.Approved
+                        && p.IsActive
+                        && !p.IsDeleted
+                        && !blocked.Contains(p.VendorId))
+            .ToList()
+            .OrderByDescending(p => unitsSold[p.Id])
+            .ToList();
+
+        return ToDtos(featured);
+
+    }
+
     public ProductResponseDTO GetProduct(int id, string callerId, bool isAdmin)
     {
         Product? product = db.Products()
