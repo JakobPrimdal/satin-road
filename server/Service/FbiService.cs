@@ -28,7 +28,7 @@ public class FbiService(LoginDb loginDb, ProductDb productDb, IRandomProvider ra
         return true;
     }
 
-    // Manual raid by an admin (testing / demo)
+    // Manual raid by an admin (testing )
     public void RaidVendor(string vendorId)
     {
         var vendor = loginDb.Users.FirstOrDefault(u => u.UserId == vendorId)
