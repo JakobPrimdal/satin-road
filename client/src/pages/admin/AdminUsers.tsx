@@ -1,6 +1,6 @@
 ﻿import { useCallback, useEffect, useState } from "react";
 import { useAdmin } from "@/components/admin/AdminData";
-import { ActionButton, EmptyState, LoadingRows, PageHeader } from "@/components/admin/parts";
+import { ActionButton, EmptyState, LoadingRows, PageHeader, Pagination, paginate, usePageParam } from "@/components/admin/parts";
 import { SearchIcon } from "@/components/icons";
 import { VendorMark } from "@/components/market/VendorMark";
 import { Button } from "@/components/ui";
@@ -9,6 +9,8 @@ import { plural } from "@/lib/format";
 import { useSession } from "@/lib/session";
 
 type Status = "active" | "blocked" | "seized";
+
+const PAGE_SIZE = 20;
 
 const statusOf = (user: AdminUser): Status => (user.isSeized ? "seized" : user.isBlocked ? "blocked" : "active");
 
@@ -32,6 +34,7 @@ export function AdminUsers() {
     const [error, setError] = useState<string | null>(null);
     const [filter, setFilter] = useState<(typeof filters)[number]["value"]>("all");
     const [query, setQuery] = useState("");
+    const { page, resetPage } = usePageParam();
 
     const load = useCallback(async () => {
         try {
@@ -65,6 +68,7 @@ export function AdminUsers() {
     const term = query.trim().toLowerCase();
     const matches = users.filter(u => !term || u.username.includes(term));
     const visible = filter === "all" ? matches : matches.filter(u => statusOf(u) === filter);
+    const paged = paginate(visible, page, PAGE_SIZE);
     const countFor = (value: string) => (value === "all" ? matches.length : matches.filter(u => statusOf(u) === value).length);
 
     return (
@@ -79,7 +83,10 @@ export function AdminUsers() {
                             key={option.value}
                             type="button"
                             aria-pressed={filter === option.value}
-                            onClick={() => setFilter(option.value)}
+                            onClick={() => {
+                                setFilter(option.value);
+                                resetPage();
+                            }}
                             className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm text-muted outline-none transition-colors hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/40 aria-pressed:bg-raised aria-pressed:text-fg"
                         >
                             {option.label}
@@ -93,7 +100,10 @@ export function AdminUsers() {
                     <input
                         type="search"
                         value={query}
-                        onChange={event => setQuery(event.target.value)}
+                        onChange={event => {
+                            setQuery(event.target.value);
+                            resetPage();
+                        }}
                         placeholder="Search by username"
                         className="h-10 w-full rounded-lg border border-line bg-field pr-3 pl-9 text-sm text-fg caret-accent outline-none transition-[border-color,box-shadow] placeholder:text-faint hover:border-line-strong focus:border-accent/60 focus:ring-3 focus:ring-accent/10 any-pointer-coarse:text-base"
                     />
@@ -103,11 +113,14 @@ export function AdminUsers() {
             {visible.length === 0 ? (
                 <EmptyState title="No users match." body="Try another status or search." />
             ) : (
-                <ul className="divide-y divide-line border-y border-line">
-                    {visible.map(user => (
-                        <UserRow key={user.userId} user={user} isMe={user.userId === session?.user.userId} onChange={replace} />
-                    ))}
-                </ul>
+                <>
+                    <ul className="divide-y divide-line border-y border-line">
+                        {paged.items.map(user => (
+                            <UserRow key={user.userId} user={user} isMe={user.userId === session?.user.userId} onChange={replace} />
+                        ))}
+                    </ul>
+                    <Pagination paged={paged} noun="user" />
+                </>
             )}
         </>
     );

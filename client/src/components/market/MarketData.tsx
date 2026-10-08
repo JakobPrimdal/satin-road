@@ -1,11 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { ApiError, getCategories, getProducts, type Category, type Product } from "@/lib/api";
+import { ApiError, getCategories, getFeaturedProducts, getProducts, type Category, type Product } from "@/lib/api";
 
 type Status = "loading" | "ready" | "error";
 
 interface MarketData {
   categories: Category[];
   products: Product[];
+  featured: Product[];
   status: Status;
   error: string | null;
   reload: () => Promise<void>;
@@ -17,14 +18,20 @@ const MarketContext = createContext<MarketData | null>(null);
 export function MarketDataProvider({ children }: { children: ReactNode }) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [featured, setFeatured] = useState<Product[]>([]);
   const [status, setStatus] = useState<Status>("loading");
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     try {
-      const [nextCategories, nextProducts] = await Promise.all([getCategories(), getProducts()]);
+      const [nextCategories, nextProducts, nextFeatured] = await Promise.all([
+        getCategories(),
+        getProducts(),
+        getFeaturedProducts().catch(() => []),
+      ]);
       setCategories(nextCategories);
       setProducts(nextProducts.filter(product => product.isActive));
+      setFeatured(nextFeatured.filter(product => product.isActive));
       setError(null);
       setStatus("ready");
     } catch (err) {
@@ -52,8 +59,8 @@ export function MarketDataProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<MarketData>(() => {
     const names = new Map(categories.map(category => [category.id, category.name]));
-    return { categories, products, status, error, reload, categoryName: id => names.get(id) };
-  }, [categories, products, status, error, reload]);
+    return { categories, products, featured, status, error, reload, categoryName: id => names.get(id) };
+  }, [categories, products, featured, status, error, reload]);
 
   return <MarketContext.Provider value={value}>{children}</MarketContext.Provider>;
 }

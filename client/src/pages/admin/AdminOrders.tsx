@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { useAdmin } from "@/components/admin/AdminData";
-import { EmptyState, LoadingRows, PageHeader, Person } from "@/components/admin/parts";
+import { EmptyState, LoadingRows, PageHeader, Pagination, Person, paginate, usePageParam } from "@/components/admin/parts";
 import { SearchIcon } from "@/components/icons";
 import { ProductPhoto } from "@/components/market/ProductPhoto";
 import { Button } from "@/components/ui";
@@ -9,6 +9,7 @@ import type { Order } from "@/lib/api";
 import { plural, primaryImage } from "@/lib/format";
 
 const dateFormat = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" });
+const PAGE_SIZE = 10;
 
 function matches(order: Order, term: string) {
   if (!term) return true;
@@ -29,6 +30,7 @@ function matches(order: Order, term: string) {
 export function AdminOrders() {
   const admin = useAdmin();
   const [query, setQuery] = useState("");
+  const { page, resetPage } = usePageParam();
 
   if (admin.status === "loading") return <LoadingRows count={4} height="h-32" />;
   if (admin.status === "error") {
@@ -44,6 +46,7 @@ export function AdminOrders() {
   const listings = new Map(admin.listings.map(p => [p.id, p]));
   const term = query.trim().toLowerCase();
   const visible = admin.orders.filter(order => matches(order, term));
+  const paged = paginate(visible, page, PAGE_SIZE);
   const units = admin.orders.reduce((sum, order) => sum + order.items.reduce((s, item) => s + item.quantity, 0), 0);
 
   return (
@@ -56,7 +59,10 @@ export function AdminOrders() {
           <input
             type="search"
             value={query}
-            onChange={event => setQuery(event.target.value)}
+            onChange={event => {
+              setQuery(event.target.value);
+              resetPage();
+            }}
             placeholder="Order number, username or item"
             className="h-10 w-full rounded-lg border border-line bg-field pr-3 pl-9 text-sm text-fg caret-accent outline-none transition-[border-color,box-shadow] placeholder:text-faint hover:border-line-strong focus:border-accent/60 focus:ring-3 focus:ring-accent/10 any-pointer-coarse:text-base"
           />
@@ -68,54 +74,57 @@ export function AdminOrders() {
       ) : visible.length === 0 ? (
         <EmptyState title="No orders match." body="Search by order number, a buyer or vendor username, or an item title." />
       ) : (
-        <ol className="flex flex-col gap-4">
-          {visible.map(order => (
-            <li key={order.id} className="rounded-lg border border-line">
-              <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b border-line px-5 py-3.5">
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                  <h2 className="text-[15px] font-medium">Order #{order.id}</h2>
-                  <Person id={order.customerId} name={order.customerUsername} role="Buyer" />
+        <>
+          <ol className="flex flex-col gap-4">
+            {paged.items.map(order => (
+              <li key={order.id} className="rounded-lg border border-line">
+                <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b border-line px-5 py-3.5">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                    <h2 className="text-[15px] font-medium">Order #{order.id}</h2>
+                    <Person id={order.customerId} name={order.customerUsername} role="Buyer" />
+                  </div>
+                  <time className="text-[13px] text-muted" dateTime={order.purchasedAt.toISOString()}>
+                    {dateFormat.format(order.purchasedAt)}
+                  </time>
                 </div>
-                <time className="text-[13px] text-muted" dateTime={order.purchasedAt.toISOString()}>
-                  {dateFormat.format(order.purchasedAt)}
-                </time>
-              </div>
-              <ul className="divide-y divide-line">
-                {order.items.map(item => {
-                  const product = listings.get(item.productId);
-                  return (
-                    <li key={`${order.id}-${item.productId}`} className="flex items-center gap-4 px-5 py-3 text-[15px]">
-                      <ProductPhoto imageId={product ? primaryImage(product)?.id : undefined} alt="" className="size-12 shrink-0 rounded-md" />
-                      <span className="min-w-0 flex-1">
-                        {product?.status === "Approved" ? (
-                          <Link
-                            to={`/market/product/${item.productId}`}
-                            className="text-fg underline-offset-4 outline-none hover:underline focus-visible:underline"
-                          >
-                            {item.title}
-                          </Link>
-                        ) : (
-                          <span>{item.title}</span>
-                        )}
-                        <span className="mt-1 block">
-                          <Person id={item.vendorId} name={item.vendorUsername} role="Vendor" />
-                        </span>
-                      </span>
-                      <span className="flex shrink-0 items-center gap-3">
-                        {item.discountPercent > 0 && (
-                          <span className="rounded border border-accent/30 px-1.5 py-px text-[11px] text-accent">
-                            {item.discountPercent}% off
+                <ul className="divide-y divide-line">
+                  {order.items.map(item => {
+                    const product = listings.get(item.productId);
+                    return (
+                      <li key={`${order.id}-${item.productId}`} className="flex items-center gap-4 px-5 py-3 text-[15px]">
+                        <ProductPhoto imageId={product ? primaryImage(product)?.id : undefined} alt="" className="size-12 shrink-0 rounded-md" />
+                        <span className="min-w-0 flex-1">
+                          {product?.status === "Approved" ? (
+                            <Link
+                              to={`/market/product/${item.productId}`}
+                              className="text-fg underline-offset-4 outline-none hover:underline focus-visible:underline"
+                            >
+                              {item.title}
+                            </Link>
+                          ) : (
+                            <span>{item.title}</span>
+                          )}
+                          <span className="mt-1 block">
+                            <Person id={item.vendorId} name={item.vendorUsername} role="Vendor" />
                           </span>
-                        )}
-                        <span className="text-muted">× {item.quantity}</span>
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </li>
-          ))}
-        </ol>
+                        </span>
+                        <span className="flex shrink-0 items-center gap-3">
+                          {item.discountPercent > 0 && (
+                            <span className="rounded border border-accent/30 px-1.5 py-px text-[11px] text-accent">
+                              {item.discountPercent}% off
+                            </span>
+                          )}
+                          <span className="text-muted">× {item.quantity}</span>
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </li>
+            ))}
+          </ol>
+          <Pagination paged={paged} noun="order" />
+        </>
       )}
     </>
   );

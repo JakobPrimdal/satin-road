@@ -13,7 +13,6 @@ import { VendorMark } from "@/components/market/VendorMark";
 import { Button } from "@/components/ui";
 import { ApiError, searchProducts, type Product } from "@/lib/api";
 import {
-  pickFeatured,
   plural,
   primaryImage,
   shortId,
@@ -87,7 +86,6 @@ export function MarketPage() {
   const session = useSession();
   const [params, setParams] = useSearchParams();
   const [attempt, setAttempt] = useState(0);
-  const [featuredPool, setFeaturedPool] = useState<Product[]>([]);
 
   const query = params.get("q")?.trim() ?? "";
   const categoryId = Number(params.get("category")) || null;
@@ -102,21 +100,11 @@ export function MarketPage() {
   const vendorId = params.get("vendor");
   const isHome = !query && !categoryId && !vendorId;
 
-  useEffect(() => {
-    if (!isHome) return;
-
-    pickFeatured()
-      .then(setFeaturedPool)
-      .catch(err => {
-        console.error("Failed to load featured products:", err);
-      });
-  }, [isHome]);
-
   const category = categoryId
     ? market.categories.find(category => category.id === categoryId)
     : undefined;
 
-  const featured = isHome ? featuredPool : [];
+  const featured = isHome ? market.featured : [];
 
   const featuredIds = new Set(
     featured.map(product => product.id),

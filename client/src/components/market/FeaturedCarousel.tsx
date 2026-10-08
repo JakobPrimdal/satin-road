@@ -1,217 +1,116 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { ProductCard } from "@/components/market/ProductCard";
+import { useMemo, useState, type ReactNode } from "react";
+import { ChevronLeftIcon, ChevronRightIcon } from "@/components/icons";
 import type { Product } from "@/lib/api";
+import { ProductCard } from "./ProductCard";
 
-const PRODUCTS_PER_PAGE = 5;
-const AUTO_ADVANCE_MS = 5000;
+const PER_PAGE = 3;
+const SWAP_MS = 6000;
 
-export function FeaturedCarousel({
-  products,
-}: {
-  products: Product[];
-}) {
-  const pages = useMemo(() => {
-    const result = [];
-
-    for (
-      let i = 0;
-      i < products.length;
-      i += PRODUCTS_PER_PAGE
-    ) {
-      result.push(
-        products.slice(
-          i,
-          i + PRODUCTS_PER_PAGE,
-        ),
-      );
-    }
-
-    return result;
-  }, [products]);
-
-  const pageCount = pages.length;
-
-  const [page, setPage] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const [progressKey, setProgressKey] = useState(0);
-
-  const currentProducts = pages[page] ?? [];
-
-  const changePage = useCallback(
-    (nextPage: number) => {
-      if (pageCount <= 1) return;
-
-      const normalized =
-        (nextPage + pageCount) % pageCount;
-
-      setPage(normalized);
-      setProgressKey(value => value + 1);
-    },
-    [pageCount],
+function toPages(products: Product[]): Product[][] {
+  if (products.length <= PER_PAGE) return [products];
+  const count = Math.ceil(products.length / PER_PAGE);
+  return Array.from({ length: count }, (_, page) =>
+    Array.from({ length: PER_PAGE }, (_, slot) => products[(page * PER_PAGE + slot) % products.length]!),
   );
+}
 
-  const nextPage = useCallback(() => {
-    changePage(page + 1);
-  }, [changePage, page]);
+export function FeaturedCarousel({ products }: { products: Product[] }) {
+  const pages = useMemo(() => toPages(products), [products]);
+  const [index, setIndex] = useState(0);
+  const [cycle, setCycle] = useState(0);
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
 
-  const previousPage = useCallback(() => {
-    changePage(page - 1);
-  }, [changePage, page]);
+  const page = index % pages.length;
+  const rotating = pages.length > 1;
+  const paused = hovered || focused;
 
-  useEffect(() => {
-    setPage(0);
-    setProgressKey(value => value + 1);
-  }, [products]);
-
-  useEffect(() => {
-    if (paused || pageCount <= 1) {
-      return;
-    }
-
-    const timeout = window.setTimeout(() => {
-      nextPage();
-    }, AUTO_ADVANCE_MS);
-
-    return () => {
-      window.clearTimeout(timeout);
-    };
-  }, [
-    paused,
-    page,
-    pageCount,
-    progressKey,
-    nextPage,
-  ]);
-
-  if (products.length === 0) {
-    return null;
+  function go(next: number) {
+    setIndex((next + pages.length) % pages.length);
+    setCycle(n => n + 1);
   }
 
   return (
     <section
       aria-labelledby="featured-heading"
+      aria-roledescription="carousel"
       className="mb-20"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
+      onPointerEnter={event => event.pointerType === "mouse" && setHovered(true)}
+      onPointerLeave={() => setHovered(false)}
+      onFocus={event => event.target.matches(":focus-visible") && setFocused(true)}
+      onBlur={event => !event.currentTarget.contains(event.relatedTarget as Node | null) && setFocused(false)}
     >
-      <div className="mb-8 flex items-end justify-between gap-6">
+      <div className={`flex items-end justify-between gap-6 ${rotating ? "mb-5" : "mb-8"}`}>
         <div>
-          <h2
-            id="featured-heading"
-            className="text-[1.75rem] leading-tight font-medium tracking-tight"
-          >
+          <h2 id="featured-heading" className="text-[1.75rem] leading-tight font-medium tracking-tight">
             Featured
           </h2>
-
-          {pageCount > 1 && (
-            <p className="mt-1.5 text-[13px] text-muted">
-              {page + 1} / {pageCount}
-            </p>
-          )}
+          <p className="mt-1.5 text-[15px] text-muted">Over 100 sold each</p>
         </div>
-
-        {pageCount > 1 && (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              aria-label="Previous featured products"
-              onClick={previousPage}
-              className="flex size-9 items-center justify-center rounded-full border border-line text-muted outline-none transition-colors hover:border-line-strong hover:text-fg focus-visible:border-accent/60"
-            >
-              <span
-                aria-hidden="true"
-                className="text-lg leading-none"
-              >
-                ←
-              </span>
-            </button>
-
-            <button
-              type="button"
-              aria-label="Next featured products"
-              onClick={nextPage}
-              className="flex size-9 items-center justify-center rounded-full border border-line text-muted outline-none transition-colors hover:border-line-strong hover:text-fg focus-visible:border-accent/60"
-            >
-              <span
-                aria-hidden="true"
-                className="text-lg leading-none"
-              >
-                →
-              </span>
-            </button>
+        {rotating && (
+          <div className="flex items-center gap-1">
+            <span className="mr-2 text-[13px] text-muted tabular-nums">
+              {page + 1} / {pages.length}
+            </span>
+            <StepButton label="Previous featured listings" onClick={() => go(page - 1)}>
+              <ChevronLeftIcon className="size-4" />
+            </StepButton>
+            <StepButton label="Next featured listings" onClick={() => go(page + 1)}>
+              <ChevronRightIcon className="size-4" />
+            </StepButton>
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 lg:grid-cols-5">
-        {currentProducts.map(product => (
-          <ProductCard
-            key={product.id}
-            product={product}
-          />
-        ))}
-      </div>
-
-      {pageCount > 1 && (
-        <div className="mt-8">
+      {rotating && (
+        <div aria-hidden="true" className="mb-8 h-0.5 overflow-hidden rounded-full bg-line">
           <div
-            className="h-px w-full overflow-hidden bg-line"
-            aria-hidden="true"
-          >
-            <div
-              key={progressKey}
-              className="h-full origin-left bg-accent"
-              style={{
-                animation: `featured-progress ${AUTO_ADVANCE_MS}ms linear forwards`,
-                animationPlayState: paused
-                  ? "paused"
-                  : "running",
-              }}
-            />
-          </div>
-
-          <div className="mt-4 flex items-center justify-center gap-2">
-            {pages.map((_, index) => (
-              <button
-                key={index}
-                type="button"
-                aria-label={`Go to featured page ${index + 1}`}
-                aria-current={
-                  page === index ? "page" : undefined
-                }
-                onClick={() => changePage(index)}
-                className="group flex h-5 items-center outline-none"
-              >
-                <span
-                  className={[
-                    "block h-px transition-all duration-300",
-                    page === index
-                      ? "w-8 bg-fg"
-                      : "w-4 bg-line-strong group-hover:w-6 group-hover:bg-muted",
-                  ].join(" ")}
-                />
-              </button>
-            ))}
-          </div>
+            key={cycle}
+            onAnimationEnd={() => go(page + 1)}
+            className={`h-full animate-drain rounded-full transition-colors duration-300 ${paused ? "bg-muted" : "bg-accent"}`}
+            style={{ animationDuration: `${SWAP_MS}ms`, animationPlayState: paused ? "paused" : "running" }}
+          />
         </div>
       )}
 
-      <style>{`
-        @keyframes featured-progress {
-          from {
-            transform: scaleX(0);
-          }
-
-          to {
-            transform: scaleX(1);
-          }
-        }
-      `}</style>
+      <div className="grid" aria-live={paused ? "polite" : "off"}>
+        {pages.map((items, i) => {
+          const active = i === page;
+          return (
+            <div
+              key={i}
+              role="group"
+              aria-roledescription="slide"
+              aria-label={`${i + 1} of ${pages.length}`}
+              inert={!active}
+              className={`col-start-1 row-start-1 grid grid-cols-1 gap-x-5 gap-y-10 sm:grid-cols-3 ${active ? "" : "pointer-events-none"}`}
+            >
+              {items.map((product, slot) => (
+                <div
+                  key={product.id}
+                  className={`transition-[opacity,translate,visibility] ease-out ${active ? "duration-500" : "invisible translate-y-2 opacity-0 duration-200"}`}
+                  style={{ transitionDelay: active ? `${150 + slot * 80}ms` : "0ms" }}
+                >
+                  <ProductCard product={product} />
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
     </section>
+  );
+}
+
+function StepButton({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className="grid size-9 place-items-center rounded-lg border border-line text-muted outline-none transition-colors hover:border-line-strong hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/40"
+    >
+      {children}
+    </button>
   );
 }

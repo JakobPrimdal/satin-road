@@ -1,17 +1,20 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { useAdmin } from "@/components/admin/AdminData";
-import { ActionButton, EmptyState, LoadingRows, PageHeader, Person, StatusPill } from "@/components/admin/parts";
+import { ActionButton, EmptyState, LoadingRows, PageHeader, Pagination, Person, StatusPill, paginate, usePageParam } from "@/components/admin/parts";
 import { useApproval } from "@/components/admin/useApproval";
 import { ProductPhoto } from "@/components/market/ProductPhoto";
 import { Button } from "@/components/ui";
 import type { ApprovalStatus, Product } from "@/lib/api";
 import { formatPrice, plural, primaryImage, stockLabel } from "@/lib/format";
 
+const PAGE_SIZE = 10;
+
 export function AdminApprovals() {
   const admin = useAdmin();
   const approval = useApproval();
   const [decided, setDecided] = useState<Map<number, ApprovalStatus>>(new Map());
+  const { page } = usePageParam();
 
   if (admin.status === "loading") return <LoadingRows count={3} height="h-40" />;
   if (admin.status === "error") {
@@ -25,6 +28,7 @@ export function AdminApprovals() {
   }
 
   const queue = admin.listings.filter(p => (p.status === "Pending" && p.isActive) || decided.has(p.id)).sort((a, b) => a.id - b.id);
+  const paged = paginate(queue, page, PAGE_SIZE);
   const waiting = queue.filter(p => p.status === "Pending").length;
   const approvedCount = [...decided.values()].filter(s => s === "Approved").length;
   const rejectedCount = decided.size - approvedCount;
@@ -66,7 +70,7 @@ export function AdminApprovals() {
       ) : (
         <>
           <ul className="flex flex-col gap-4">
-            {queue.map(product => (
+            {paged.items.map(product => (
               <ApprovalCard
                 key={product.id}
                 product={product}
@@ -79,6 +83,7 @@ export function AdminApprovals() {
               />
             ))}
           </ul>
+          <Pagination paged={paged} noun="listing" />
         </>
       )}
     </>
