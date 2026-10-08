@@ -37,6 +37,11 @@ builder.Services.AddScoped<AuthService>();
 
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
+builder.Services.AddSingleton<IRandomProvider, RandomProvider>();
+builder.Services.AddSingleton(
+    builder.Configuration.GetSection("Fbi").Get<FbiSettings>() ?? new FbiSettings(0.01));
+builder.Services.AddScoped<FbiService>();
+
 // ---------- error handling ----------
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
@@ -188,6 +193,34 @@ app.UseOpenApi();
 app.UseSwaggerUi();
 
 app.UseAuthentication();
+
+// a seized user gets refused on every request
+app.Use(async (context, next) =>
+{
+    var userId = context.User.FindFirst("sub")?.Value;
+    if (userId is not null)
+    {
+        var loginDb = context.RequestServices.GetRequiredService<LoginDb>();
+        var user = loginDb.Users.FirstOrDefault(u => u.UserId == userId);
+
+        if (user is null)
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await context.Response.WriteAsJsonAsync(new { title = "Unauthorized", status = 401, detail = "Your session is no longer valid. Please log in again." });
+            return;
+        }
+
+        if (!user.IsActive)
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            await context.Response.WriteAsJsonAsync(new { title = "Seized", status = 403, detail = "This account has been seized by the FBI." });
+            return;
+        }
+    }
+
+    await next();
+});
+
 app.UseAuthorization();
 
 app.MapControllers();

@@ -16,5 +16,7 @@ public class ProductResponseDTO
     public DateTime? RestoredByAdminAtUtc { get; set; }
     
     public string? AdminNotice { get; set; }
+    
+    public bool VendorSeized { get; set; }
     public List<ProductImageDTO> Images { get; set; }
 }

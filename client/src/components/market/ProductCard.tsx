@@ -5,6 +5,7 @@ import { formatPrice, primaryImage, stockLabel, stockTone } from "@/lib/format";
 import { useCart } from "@/lib/local";
 import { useMarket } from "./MarketData";
 import { ProductPhoto } from "./ProductPhoto";
+import {useSession} from "@/lib/session";
 
 export function ProductCard({ product, lead = false }: { product: Product; lead?: boolean }) {
   const { categoryName } = useMarket();
@@ -12,6 +13,7 @@ export function ProductCard({ product, lead = false }: { product: Product; lead?
   const inCart = cart.quantityOf(product.id);
   const image = primaryImage(product);
   const soldOut = product.stock <= 0;
+  const session = useSession();
 
   return (
     <Link
@@ -51,7 +53,12 @@ export function ProductCard({ product, lead = false }: { product: Product; lead?
           <p className="line-clamp-2 max-w-prose text-[15px] leading-relaxed text-muted">{product.description}</p>
         )}
         <div className="flex items-baseline justify-between gap-4 text-[13px]">
-          <span className="truncate text-muted">{categoryName(product.categoryId) ?? "Uncategorized"}</span>
+          <span className="flex min-w-0 items-center gap-2">
+  <span className="truncate text-muted">{categoryName(product.categoryId) ?? "Uncategorized"}</span>
+            {product.vendorId === session?.user.userId && (
+                <span className="shrink-0 rounded border border-accent/30 px-1.5 py-px text-[11px] text-accent">Your listing</span>
+            )}
+</span>
           <span className={`shrink-0 ${stockTone(product.stock)}`}>{stockLabel(product.stock)}</span>
         </div>
       </div>

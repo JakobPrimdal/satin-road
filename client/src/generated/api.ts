@@ -54,6 +54,7 @@ export interface OrderResponseDTO {
   customerUsername?: string;
   /** @format date-time */
   purchasedAtUtc?: string;
+  raidedVendors?: string[];
   products?: OrderProductResponseDTO[];
 }
 
@@ -99,6 +100,7 @@ export interface ProductResponseDTO {
   /** @format date-time */
   restoredByAdminAtUtc?: string | null;
   adminNotice?: string | null;
+  vendorSeized?: boolean;
   images?: ProductImageDTO[];
 }
 
@@ -558,6 +560,29 @@ export class Api<
       this.request<Blob, any>({
         path: `/DeleteCategory`,
         method: "DELETE",
+        query: query,
+        secure: true,
+        ...params,
+      }),
+  };
+  raidVendor = {
+    /**
+     * No description
+     *
+     * @tags Fbi
+     * @name FbiRaidVendor
+     * @request POST:/RaidVendor
+     * @secure
+     */
+    fbiRaidVendor: (
+      query?: {
+        vendorId?: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<Blob, any>({
+        path: `/RaidVendor`,
+        method: "POST",
         query: query,
         secure: true,
         ...params,

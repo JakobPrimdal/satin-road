@@ -8,7 +8,7 @@ import {
   type UserDto,
 } from "@/generated/api";
 import { getSession, setSession, type Session } from "./session";
-
+import { markSeized } from "./seized";
 export const API_URL = envApiUrl() || "http://localhost:5120";
 
 function envApiUrl(): string | undefined {
@@ -56,6 +56,7 @@ export interface Product {
   isActive: boolean;
   restoredByAdmin: boolean
   adminNotice: string | null;
+  vendorSeized: boolean;
   images: ProductImage[];
 }
 
@@ -69,6 +70,7 @@ export interface Order {
   customerId: string;
   customerUsername: string;
   purchasedAt: Date;
+  raidedVendors: string[];
   items: { productId: number; title: string; quantity: number; vendorId: string; vendorUsername: string; discountPercent: number }[];
 }
 
@@ -101,7 +103,11 @@ async function call<T>(request: () => Promise<T>): Promise<T> {
 
 function toApiError(res: HttpResponse<unknown, ProblemDetails | null>): ApiError {
   const problem = res.error && typeof res.error === "object" ? res.error : null;
-
+  
+  if (res.status === 403 && /seized/i.test(problem?.detail ?? "")) {
+    markSeized();
+    return new ApiError(problem?.detail ?? "This account has been seized by the FBI.", 403);
+  }
   if (res.status === 401 && getSession()) {
     setSession(null);
     return new ApiError("Your session has expired. Sign in again.", 401);
@@ -137,12 +143,13 @@ function toProduct(dto: ProductResponseDTO): Product {
     isActive: dto.isActive ?? true,
     restoredByAdmin: !!dto.restoredByAdminAtUtc,
     adminNotice: dto.adminNotice ?? null,
+    vendorSeized: dto.vendorSeized ?? false,
     images: (dto.images ?? [])
       .map(image => ({ id: image.id ?? 0, isPrimary: image.isPrimary ?? false, sortOrder: image.sortOrder ?? 0 }))
       .sort((a, b) => a.sortOrder - b.sortOrder),
   };
 }
-
+export const getMe = () => call(() => api.getMe.authGetMe());
 export const register = (credentials: Credentials) =>
   call(() => api.register.authRegister(credentials)).then(dto => toUser(dto, credentials.username));
 
@@ -174,6 +181,7 @@ function toOrder(dto: OrderResponseDTO): Order {
     customerId: dto.customerId ?? "",
     customerUsername: dto.customerUsername ?? "",
     purchasedAt: parseUtc(dto.purchasedAtUtc),
+    raidedVendors: dto.raidedVendors ?? [],
     items: (dto.products ?? []).map(item => ({
       productId: item.productId ?? 0,
       title: item.productTitle ?? "",

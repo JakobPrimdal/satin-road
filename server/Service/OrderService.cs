@@ -11,11 +11,12 @@ public class OrderService : IOrderService
 {
     private readonly OrderDb orderDb;
     private readonly ProductDb productDb;
-
-    public OrderService(OrderDb orderDb, ProductDb productDb)
+    private readonly FbiService fbi;
+    public OrderService(OrderDb orderDb, ProductDb productDb,FbiService fbi)
     {
         this.orderDb = orderDb;
         this.productDb = productDb;
+        this.fbi = fbi;
     }
     
     public List<OrderResponseDTO> GetCustomerOrders(string callerId, bool isAdmin)
@@ -49,6 +50,8 @@ public class OrderService : IOrderService
 
     public OrderResponseDTO CreateCustomerOrder(OrderRequestDTO dto, string customerId)
     {
+        if (fbi.IsSeized(customerId))
+            throw new ForbiddenException("This account has been seized by the FBI.");
         if (dto.Products is null || dto.Products.Count == 0)
             throw new BadRequestException("An order must contain at least one product.");
         
@@ -107,13 +110,22 @@ public class OrderService : IOrderService
             product.UpdatedAtUtc = DateTime.UtcNow;
             productDb.Update(product);
         }
+        //  every vendor in this order has a 1 % raid chance 
+        // The order itself still goes through.
+        var raidedVendorIds = validatedItems
+            .Select(i => i.Product.VendorId)
+            .Distinct()
+            .Where(fbi.RollForRaid)
+            .ToList();
 
         var customerOrder = orderDb.CustomerOrders()
             .LoadWith(o => o.Products)
             .ThenLoad(op => op.Product)
             .FirstOrDefault(o => o.Id == order.Id);
-        
-        return ToDto(customerOrder!);
+
+        var response = ToDto(customerOrder!);
+        response.RaidedVendors = UsernamesFor(raidedVendorIds).Values.ToList();
+        return response;
     }
 
     private Dictionary<string, string> UsernamesFor(IEnumerable<string> userIds)
