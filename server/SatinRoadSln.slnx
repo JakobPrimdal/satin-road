@@ -4,4 +4,5 @@
   </Folder>
   <Project Path="Api/Api.csproj" />
   <Project Path="Service/Service.csproj" />
+  <Project Path="Tests/Tests.csproj" />
 </Solution>
