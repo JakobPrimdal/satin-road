@@ -14,6 +14,7 @@ const sections = [
   { key: "listings", to: "/admin/listings", label: "Listings" },
   { key: "categories", to: "/admin/categories", label: "Categories" },
   { key: "orders", to: "/admin/orders", label: "Orders" },
+  { key: "users", to: "/admin/users", label: "Users" },
 ];
 
 export function AdminLayout() {

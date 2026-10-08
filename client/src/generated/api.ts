@@ -15,6 +15,7 @@ export interface UserDto {
   username?: string;
   role?: string;
   isActive?: boolean;
+  isBlocked?: boolean;
 }
 
 export interface RegisterRequestDto {
@@ -111,6 +112,18 @@ export interface ProductImageDTO {
   /** @format int32 */
   sortOrder?: number;
   extension?: string;
+}
+
+export interface AdminUserDTO {
+  userId?: string;
+  username?: string;
+  role?: string;
+  isBlocked?: boolean;
+  isSeized?: boolean;
+  /** @format int32 */
+  listingCount?: number;
+  /** @format int32 */
+  orderCount?: number;
 }
 
 export type QueryParamsType = Record<string | number, any>;
@@ -1036,6 +1049,49 @@ export class Api<
         path: `/ClearAdminNotices`,
         method: "POST",
         secure: true,
+        ...params,
+      }),
+  };
+  getUsers = {
+    /**
+     * No description
+     *
+     * @tags User
+     * @name UserGetUsers
+     * @request GET:/GetUsers
+     * @secure
+     */
+    userGetUsers: (params: RequestParams = {}) =>
+      this.request<AdminUserDTO[], any>({
+        path: `/GetUsers`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+  };
+  setUserBlocked = {
+    /**
+     * No description
+     *
+     * @tags User
+     * @name UserSetUserBlocked
+     * @request PUT:/SetUserBlocked
+     * @secure
+     */
+    userSetUserBlocked: (
+      query?: {
+        userId?: string;
+        blocked?: boolean;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<AdminUserDTO, any>({
+        path: `/SetUserBlocked`,
+        method: "PUT",
+        query: query,
+        secure: true,
+        format: "json",
         ...params,
       }),
   };

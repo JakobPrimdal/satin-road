@@ -34,6 +34,7 @@ builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<UserService>();
 
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
@@ -194,7 +195,7 @@ app.UseSwaggerUi();
 
 app.UseAuthentication();
 
-// a seized user gets refused on every request
+// a seized or blocked user gets refused on every request
 app.Use(async (context, next) =>
 {
     var userId = context.User.FindFirst("sub")?.Value;
@@ -214,6 +215,12 @@ app.Use(async (context, next) =>
         {
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
             await context.Response.WriteAsJsonAsync(new { title = "Seized", status = 403, detail = "This account has been seized by the FBI." });
+            return;
+        }
+        if (user.IsBlocked)
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            await context.Response.WriteAsJsonAsync(new { title = "Blocked", status = 403, detail = "Your account has been blocked by Satin Road." });
             return;
         }
     }

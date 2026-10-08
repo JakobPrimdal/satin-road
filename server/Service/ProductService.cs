@@ -19,9 +19,10 @@ public class ProductService: IProductService
     
     public List<ProductResponseDTO> GetProducts(string callerId)
     {
+        var blocked = BlockedVendorIds();
         return ToDtos(db.Products()
             .LoadWith(p => p.Images)
-            .Where(p => p.Status == ProductStatus.Approved && p.IsActive )
+            .Where(p => p.Status == ProductStatus.Approved && p.IsActive && !blocked.Contains(p.VendorId))
             .ToList());
     }
 
@@ -66,10 +67,10 @@ public class ProductService: IProductService
     {
         if (string.IsNullOrWhiteSpace(search))
             return GetProducts(callerId);
-
+        var blocked = BlockedVendorIds();
         List<Product> matches = db.Products()
             .LoadWith(p => p.Images)
-            .Where(p => p.Status == ProductStatus.Approved && p.IsActive
+            .Where(p => p.Status == ProductStatus.Approved && p.IsActive && !blocked.Contains(p.VendorId)
                         && (p.Title.Contains(search) || p.Description.Contains(search)))
             .ToList();
 
@@ -320,6 +321,8 @@ public class ProductService: IProductService
             .Select(u => u.UserId)
             .ToHashSet();
     }
+    private List<string> BlockedVendorIds() =>
+        loginDb.Users.Where(u => u.IsBlocked).Select(u => u.UserId).ToList();
 
 
     private List<ProductResponseDTO> ToDtos(List<Product> products)
