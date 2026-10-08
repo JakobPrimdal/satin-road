@@ -565,6 +565,29 @@ export class Api<
         ...params,
       }),
   };
+  raidVendor = {
+    /**
+     * No description
+     *
+     * @tags Fbi
+     * @name FbiRaidVendor
+     * @request POST:/RaidVendor
+     * @secure
+     */
+    fbiRaidVendor: (
+      query?: {
+        vendorId?: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<Blob, any>({
+        path: `/RaidVendor`,
+        method: "POST",
+        query: query,
+        secure: true,
+        ...params,
+      }),
+  };
   getOrders = {
     /**
      * No description
