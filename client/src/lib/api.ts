@@ -234,7 +234,7 @@ function toOrder(dto: OrderResponseDTO): Order {
 export const placeOrder = (lines: OrderLine[]) =>
   call(() =>
     api.placeOrder.orderPlaceOrder({
-      products: lines.map(line => ({ productid: line.productId, quantity: line.quantity })),
+      products: lines.map(line => ({ productId: line.productId, quantity: line.quantity })),
     }),
   ).then(toOrder);
 
