@@ -191,5 +191,13 @@
     { "customer": "anon7731", "daysAgo": 9, "items": [{ "product": "Golden Teacher mushrooms, 3.5 g", "quantity": 2 }, { "product": "Modalert 200 mg, 10 tablets", "quantity": 1 }] },
     { "customer": "hofmann", "daysAgo": 5, "items": [{ "product": "Bitcoin hardware wallet", "quantity": 1 }] },
     { "customer": "nightowl", "daysAgo": 2, "items": [{ "product": "Golden Teacher mushrooms, 3.5 g", "quantity": 1 }, { "product": "Four-piece herb grinder", "quantity": 1 }] }
+  ],
+  "popularProducts": [
+    { "product": "Northern Lights, 3.5 g", "totalUnitsSold": 180 },
+    { "product": "Lock pick set, 4 pieces", "totalUnitsSold": 150 },
+    { "product": "Golden Teacher mushrooms, 3.5 g", "totalUnitsSold": 120 },
+    { "product": "Modalert 200 mg, 10 tablets", "totalUnitsSold": 110 },
+    { "product": "Hardware security key", "totalUnitsSold": 105 },
+    { "product": "Lebanese hash, 5 g", "totalUnitsSold": 100 }
   ]
 }

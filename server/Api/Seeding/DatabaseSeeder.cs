@@ -138,7 +138,9 @@ public static class DatabaseSeeder
         var now = DateTime.UtcNow;
         var priorOrders = new Dictionary<(string Customer, string Vendor), int>();
 
-        foreach (var seedOrder in data.Orders.OrderByDescending(o => o.DaysAgo))
+        var allOrders = data.Orders.Concat(GeneratePopularOrders(data)).ToList();
+
+        foreach (var seedOrder in allOrders.OrderByDescending(o => o.DaysAgo))
         {
             var customerId = Lookup(userIds, seedOrder.Customer, "user");
             var orderId = db.InsertWithInt32Identity(new CustomerOrder
@@ -167,7 +169,50 @@ public static class DatabaseSeeder
                 priorOrders[(customerId, vendorId)] = priorOrders.GetValueOrDefault((customerId, vendorId)) + 1;
         }
 
-        return data.Orders.Count;
+        return allOrders.Count;
+    }
+    
+    private static List<SeedOrder> GeneratePopularOrders(SeedData data)
+    {
+        int[] quantityPattern = [1, 2, 3, 2, 5, 1, 4];
+        var generated = new List<SeedOrder>();
+        
+        var buyerNames = data.Users
+            .Where(u => (u.Role ?? Roles.User) != Roles.Admin && (u.IsActive ?? true))
+            .Select(u => u.Username.Trim().ToLowerInvariant())
+            .ToList();
+
+        foreach (var popular in data.PopularProducts ?? [])
+        {
+            var product = data.Products.FirstOrDefault(p => p.Title == popular.Product)
+                          ?? throw new InvalidOperationException(
+                              $"seed.json popularProducts refers to an unknown product: '{popular.Product}'.");
+
+            var alreadySold = data.Orders.SelectMany(o => o.Items)
+                .Where(i => i.Product == popular.Product)
+                .Sum(i => i.Quantity);
+            var remaining = popular.TotalUnitsSold - alreadySold;
+            if (remaining < 0)
+                throw new InvalidOperationException(
+                    $"'{popular.Product}' already has {alreadySold} units sold in \"orders\", more than its totalUnitsSold of {popular.TotalUnitsSold}.");
+            
+            var vendorName = product.Vendor.Trim().ToLowerInvariant();
+            var buyers = buyerNames.Where(b => b != vendorName).ToList();
+            
+            var daySpan = Math.Max(1, product.DaysAgo - 1);
+
+            for (var i = 0; remaining > 0; i++)
+            {
+                var quantity = Math.Min(quantityPattern[i % quantityPattern.Length], remaining);
+                generated.Add(new SeedOrder(
+                    buyers[i % buyers.Count],
+                    1 + (i * 7) % daySpan,
+                    [new SeedOrderItem(popular.Product, quantity)]));
+                remaining -= quantity;
+            }
+        }
+
+        return generated;
     }
 
     private static T Lookup<T>(Dictionary<string, T> values, string key, string kind)
@@ -183,7 +228,10 @@ public static class DatabaseSeeder
         List<SeedUser> Users,
         List<string> Categories,
         List<SeedProduct> Products,
-        List<SeedOrder> Orders);
+        List<SeedOrder> Orders,
+        List<SeedPopularProduct>? PopularProducts);
+
+    private sealed record SeedPopularProduct(string Product, int TotalUnitsSold);
 
     private sealed record SeedUser(string Username, string? Password, string? Role, bool? IsActive);
 
