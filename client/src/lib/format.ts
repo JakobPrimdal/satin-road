@@ -1,4 +1,4 @@
-import type { Product } from "./api";
+import { getFeaturedProducts, type Product } from "./api";
 
 const btcFormat = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 8 });
 
@@ -50,9 +50,6 @@ export function sortProducts(products: Product[], sort: SortKey): Product[] {
   return sorted;
 }
 
-export function pickFeatured(products: Product[], count = 5): Product[] {
-  return products
-    .filter(product => product.images.length > 0 && product.stock > 0)
-    .sort((a, b) => b.id - a.id)
-    .slice(0, count);
+export async function pickFeatured(): Promise<Product[]> {
+  return getFeaturedProducts();
 }

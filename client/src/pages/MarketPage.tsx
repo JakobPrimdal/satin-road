@@ -40,6 +40,7 @@ export function MarketPage() {
   const session = useSession();
   const [params, setParams] = useSearchParams();
   const [attempt, setAttempt] = useState(0);
+  const [featuredPool, setFeaturedPool] = useState<Product[]>([]);
 
   const query = params.get("q")?.trim() ?? "";
   const categoryId = Number(params.get("category")) || null;
@@ -49,9 +50,17 @@ export function MarketPage() {
   const vendorId = params.get("vendor");
   const isHome = !query && !categoryId && !vendorId;
 
+  useEffect(() => {
+    if (!isHome) return;
+
+    pickFeatured()
+      .then(setFeaturedPool)
+      .catch(err => console.error("Failed to load featured products:", err));
+  }, [isHome]);
+
   const category = categoryId ? market.categories.find(c => c.id === categoryId) : undefined;
-  const featuredPool = pickFeatured(market.products);
-  const featured = isHome ? featuredPool.slice(0, featuredPool.length >= 5 ? 5 : featuredPool.length >= 3 ? 3 : 0) : [];
+
+  const featured = isHome ? featuredPool.slice(0, featuredPool.length >= 5 ? 5 : featuredPool.length >= 3 ? 3 : 0): [];
   const featuredIds = new Set(featured.map(p => p.id));
   const listings = sortProducts(
     (query ? search.results : market.products).filter(

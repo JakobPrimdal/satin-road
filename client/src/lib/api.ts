@@ -200,6 +200,8 @@ export const getProducts = () => call(() => api.getProducts.productGetProducts()
 
 export const getProduct = (id: number) => call(() => api.getProduct.productGetProduct({ id })).then(toProduct);
 
+export const getFeaturedProducts = () => call(() => api.getFeaturedProducts.productGetFeaturedProducts()).then(list => list.map(toProduct));
+
 export const searchProducts = (search: string, signal?: AbortSignal) =>
   call(() => api.searchProducts.productSearchProducts({ search }, { signal })).then(list => list.map(toProduct));
 
