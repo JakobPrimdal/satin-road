@@ -116,10 +116,9 @@ function ListingRow({ product, orderCount }: { product: Product; orderCount: num
     setWorking("reactivate");
     setRowError(null);
     try {
-      await setProductActive(product.id, true);
-      admin.patchListing(product.id, { isActive: true });
+      admin.patchListing(product.id, await setProductActive(product.id, true));
     } catch (err) {
-      setRowError(err instanceof ApiError && err.status === 404 ? "This listing was deleted, so it can't be reactivated." : errorText(err));
+      setRowError(errorText(err));
     } finally {
       setWorking(null);
     }
