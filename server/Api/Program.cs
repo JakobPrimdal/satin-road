@@ -19,7 +19,7 @@ CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
 var builder = WebApplication.CreateBuilder(args);
 
 // ---------- database ----------
-var connectionString = "Data Source=db.db;Foreign Keys=True";
+var connectionString = "Data Source=/app/data/db.db;Foreign Keys=True";
 var options = new DataOptions().UseSQLite(connectionString);
 
 var userDbOptions = new DataOptions<LoginDb>(options);
@@ -175,7 +175,7 @@ using (var scope = app.Services.CreateScope())
                     );
                     """);
 
-    if (app.Environment.IsDevelopment() && app.Configuration.GetValue("Seed:Enabled", true))
+    if (app.Configuration.GetValue("Seed:Enabled", false))
     {
         DatabaseSeeder.Seed(
             productDb,

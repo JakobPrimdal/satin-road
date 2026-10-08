@@ -9,6 +9,9 @@
 # db files
 *.db
 
+# dockerignore
+.dockerignore
+
 # User-specific files
 *.rsuser
 *.suo
