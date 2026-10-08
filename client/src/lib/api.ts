@@ -9,7 +9,7 @@ import {
   type AdminUserDTO
 } from "@/generated/api";
 import { getSession, setSession, type Session } from "./session";
-import { markSeized } from "./seized";
+import { markBlocked,markSeized } from "./seized";
 export const API_URL = envApiUrl() || "http://localhost:5120";
 
 function envApiUrl(): string | undefined {
@@ -108,6 +108,10 @@ function toApiError(res: HttpResponse<unknown, ProblemDetails | null>): ApiError
   if (res.status === 403 && /seized/i.test(problem?.detail ?? "")) {
     markSeized();
     return new ApiError(problem?.detail ?? "This account has been seized by the FBI.", 403);
+  }
+  if (res.status === 403 && /blocked/i.test(problem?.detail ?? "")) {
+    markBlocked();
+    return new ApiError(problem?.detail ?? "Your account has been blocked by Satin Road.", 403);
   }
   if (res.status === 401 && getSession()) {
     setSession(null);

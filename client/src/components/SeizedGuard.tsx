@@ -1,10 +1,10 @@
 ﻿import { useEffect } from "react";
 import { getMe } from "@/lib/api";
-import { useSeized } from "@/lib/seized";
+import { useAccountLock } from "@/lib/seized"
 import { getSession, setSession } from "@/lib/session";
 import { Wordmark } from "@/components/Logo";
 export function SeizedGuard() {
-    const seized = useSeized();
+    const lock = useAccountLock();
     useEffect(() => {
         let lastCheck = 0;
         const check = () => {
@@ -19,13 +19,14 @@ export function SeizedGuard() {
             document.removeEventListener("visibilitychange", check);
         };
     }, []);
-
-    if (!seized) return null;
-
+    
     function logOut() {
         setSession(null);
         window.location.href = "/";
     }
+
+    if (!lock) return null;
+    if (lock === "blocked") return <BlockedScreen onLogOut={logOut} />;
 
     return (
         <div
@@ -86,6 +87,27 @@ function WarningSign() {
         </svg>
     );
 }
-
+function BlockedScreen({ onLogOut }: { onLogOut: () => void }) {
+    return (
+        <div role="alertdialog" aria-modal="true" aria-labelledby="blocked-title" className="fixed inset-0 z-[100] flex items-center justify-center bg-canvas/95 px-6">
+            <div className="max-w-md rounded-lg border border-line bg-surface px-8 py-10 text-center">
+                <div className="flex justify-center text-fg/80">
+                    <Wordmark />
+                </div>
+                <h1 id="blocked-title" className="mt-6 text-2xl font-medium tracking-tight">Your account has been blocked</h1>
+                <p className="mt-3 text-[15px] text-muted">
+                    A Satin Road admin has blocked this account. Your listings are hidden from the market until the block is lifted.
+                </p>
+                <button
+                    type="button"
+                    onClick={onLogOut}
+                    className="mt-8 h-11 rounded-lg border border-line-strong px-5 text-[15px] outline-none hover:bg-raised focus-visible:ring-2 focus-visible:ring-accent/40"
+                >
+                    Log out
+                </button>
+            </div>
+        </div>
+    );
+}
 
 
