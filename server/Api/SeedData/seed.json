@@ -165,7 +165,38 @@
       "description": "John Holt's classic in the original Pelican paperback. Well read.",
       "price": 9.50, "stock": 1, "category": "Books", "vendor": "headshop", "status": "Pending", "daysAgo": 1,
       "images": ["pelican-1.jpg"]
+    },
+    {
+      "title": "Fake US Driver's License",
+      "description": "Novelty driver's license replica for costume and prop purposes. Definitely not valid identification.",
+      "price": 85.00, "stock": 7, "category": "Replicas", "vendor": "atelier", "status": "Approved", "daysAgo": 32, "images": ["drivers-license-1.jpg"]
+    },
+    {
+      "title": "Pre-registered Anonymous SIM Cards",
+      "description": "A suspiciously mysterious pack of prepaid SIM cards. Seller provides absolutely no useful explanation.",
+      "price": 35.00, "stock": 15, "category": "Privacy & Security", "vendor": "ghostline", "status": "Approved", "daysAgo": 29, "images": ["anonymous-sim-1.jpg"]
+    },
+    {
+      "title": "Stolen Visa Credit Card Data",
+      "description": "Fictional placeholder listing representing the site's intentionally shady reputation. Contains no real payment information.",
+      "price": 50.00, "stock": 3, "category": "Privacy & Security", "vendor": "anon7731", "status": "Rejected", "daysAgo": 26, "images": ["credit-card-data-1.jpg"]
+    },
+    {
+      "title": "Counterfeit British Passports",
+      "description": "Comically fake passport replicas for theatrical and costume use. The seller insists they are 'totally legitimate'.",
+      "price": 160.00, "stock": 5, "category": "Replicas", "vendor": "atelier", "status": "Rejected", "daysAgo": 23, "images": ["fake-passport-1.jpg"]
+    },
+    {
+      "title": "99% Pure Dutch MDMA Crystals",
+      "description": "Fictional parody listing for the site's deliberately questionable marketplace aesthetic. Not a real product.",
+      "price": 110.00, "stock": 8, "category": "Psychedelics", "vendor": "nightowl", "status": "Approved", "daysAgo": 20, "images": ["mdma-crystals-1.jpg"]
+    },
+    {
+      "title": "Black Tar Heroin",
+      "description": "Fictional parody marketplace listing. Included solely as part of the site's satirical depiction of an underground marketplace.",
+      "price": 130.00, "stock": 6, "category": "Psychedelics", "vendor": "nightowl", "status": "Rejected", "daysAgo": 17, "images": ["black-tar-1.jpg"]
     }
+
   ],
   "orders": [
     { "customer": "dread_pirate", "daysAgo": 45, "items": [{ "product": "Northern Lights, 3.5 g", "quantity": 1 }] },
@@ -198,6 +229,12 @@
     { "product": "Golden Teacher mushrooms, 3.5 g", "totalUnitsSold": 120 },
     { "product": "Modalert 200 mg, 10 tablets", "totalUnitsSold": 110 },
     { "product": "Hardware security key", "totalUnitsSold": 105 },
-    { "product": "Lebanese hash, 5 g", "totalUnitsSold": 100 }
+    { "product": "Lebanese hash, 5 g", "totalUnitsSold": 101 },
+    { "product": "Fake US Driver's License", "totalUnitsSold": 101 }, 
+    { "product": "Pre-registered Anonymous SIM Cards", "totalUnitsSold": 130 }, 
+    { "product": "Stolen Visa Credit Card Data", "totalUnitsSold": 123 }, 
+    { "product": "Counterfeit British Passports", "totalUnitsSold": 143 }, 
+    { "product": "99% Pure Dutch MDMA Crystals", "totalUnitsSold": 119 }, 
+    { "product": "Black Tar Heroin", "totalUnitsSold": 134 }
   ]
 }
