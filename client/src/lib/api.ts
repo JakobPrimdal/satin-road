@@ -6,6 +6,7 @@ import {
   type ProblemDetails,
   type ProductResponseDTO,
   type UserDto,
+  type AdminUserDTO
 } from "@/generated/api";
 import { getSession, setSession, type Session } from "./session";
 import { markSeized } from "./seized";
@@ -149,6 +150,34 @@ function toProduct(dto: ProductResponseDTO): Product {
       .sort((a, b) => a.sortOrder - b.sortOrder),
   };
 }
+export interface AdminUser {
+  userId: string;
+  username: string;
+  role: string;
+  isBlocked: boolean;
+  isSeized: boolean;
+  listingCount: number;
+  orderCount: number;
+}
+
+function toAdminUser(dto: AdminUserDTO): AdminUser {
+  return {
+    userId: dto.userId ?? "",
+    username: dto.username ?? "",
+    role: dto.role ?? "User",
+    isBlocked: dto.isBlocked ?? false,
+    isSeized: dto.isSeized ?? false,
+    listingCount: dto.listingCount ?? 0,
+    orderCount: dto.orderCount ?? 0,
+  };
+}
+
+export const getUsers = () => call(() => api.getUsers.userGetUsers()).then(list => list.map(toAdminUser));
+
+export const setUserBlocked = (userId: string, blocked: boolean) =>
+    call(() => api.setUserBlocked.userSetUserBlocked({ userId, blocked })).then(toAdminUser);
+
+
 export const getMe = () => call(() => api.getMe.authGetMe());
 export const register = (credentials: Credentials) =>
   call(() => api.register.authRegister(credentials)).then(dto => toUser(dto, credentials.username));

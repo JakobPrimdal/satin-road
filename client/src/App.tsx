@@ -14,6 +14,7 @@ import { MyListingsPage } from "./pages/MyListingsPage";
 import { OrdersPage } from "./pages/OrdersPage";
 import { ProductPage } from "./pages/ProductPage";
 import { SeizedGuard } from "./components/SeizedGuard";
+import { AdminUsers } from "./pages/admin/AdminUsers";
 import "./index.css";
 
 export function App() {
@@ -37,7 +38,9 @@ export function App() {
           <Route path="listings" element={<AdminListings />} />
           <Route path="categories" element={<AdminCategories />} />
           <Route path="orders" element={<AdminOrders />} />
+          <Route path="users" element={<AdminUsers />} />
         </Route>
+        
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
