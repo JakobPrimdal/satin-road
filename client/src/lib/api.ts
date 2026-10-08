@@ -10,7 +10,7 @@ import {
 } from "@/generated/api";
 import { getSession, setSession, type Session } from "./session";
 import { markBlocked,markSeized } from "./seized";
-export const API_URL = envApiUrl() || "http://localhost:5120";
+export const API_URL = envApiUrl() ?? "http://localhost:4000"
 
 function envApiUrl(): string | undefined {
   try {
