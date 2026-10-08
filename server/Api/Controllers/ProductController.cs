@@ -37,6 +37,12 @@ public class ProductController(ProductService service) : ControllerBase
         return service.GetPendingProducts();
     }
 
+    [HttpGet(nameof(GetFeaturedProducts))]
+    public List<ProductResponseDTO> GetFeaturedProducts()
+    {
+        return service.GetFeaturedProducts();
+    }
+
     [HttpGet(nameof(GetProduct))]
     public ActionResult<ProductResponseDTO> GetProduct(int id)
     {
