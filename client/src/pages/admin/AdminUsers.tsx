@@ -1,9 +1,10 @@
 ﻿import { useCallback, useEffect, useState } from "react";
+import { useAdmin } from "@/components/admin/AdminData";
 import { ActionButton, EmptyState, LoadingRows, PageHeader } from "@/components/admin/parts";
 import { SearchIcon } from "@/components/icons";
 import { VendorMark } from "@/components/market/VendorMark";
 import { Button } from "@/components/ui";
-import { ApiError, getUsers, setUserBlocked, type AdminUser } from "@/lib/api";
+import { ApiError, getUsers, raidVendor, setUserBlocked, type AdminUser } from "@/lib/api";
 import { plural } from "@/lib/format";
 import { useSession } from "@/lib/session";
 
@@ -113,7 +114,10 @@ export function AdminUsers() {
 }
 
 function UserRow({ user, isMe, onChange }: { user: AdminUser; isMe: boolean; onChange: (user: AdminUser) => void }) {
+    const admin = useAdmin();
     const [busy, setBusy] = useState(false);
+    const [confirmingSeize, setConfirmingSeize] = useState(false);
+    const [seizing, setSeizing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const status = statusOf(user);
     const style = statusStyle[status];
@@ -128,6 +132,21 @@ function UserRow({ user, isMe, onChange }: { user: AdminUser; isMe: boolean; onC
             setError(err instanceof ApiError ? err.message : "Something went wrong.");
         } finally {
             setBusy(false);
+        }
+    }
+
+    async function seize() {
+        setSeizing(true);
+        setError(null);
+        try {
+            await raidVendor(user.userId);
+            onChange({ ...user, isSeized: true });
+            admin.reload();
+        } catch (err) {
+            setError(err instanceof ApiError ? err.message : "Something went wrong.");
+        } finally {
+            setSeizing(false);
+            setConfirmingSeize(false);
         }
     }
 
@@ -148,11 +167,27 @@ function UserRow({ user, isMe, onChange }: { user: AdminUser; isMe: boolean; onC
                 </p>
                 {error && <p className="mt-1 text-[13px] text-danger">{error}</p>}
             </div>
-            {canChange && (
-                <ActionButton tone={user.isBlocked ? "primary" : "danger"} busy={busy} onClick={toggle}>
-                    {user.isBlocked ? "Unblock" : "Block"}
-                </ActionButton>
-            )}
+            {canChange &&
+                (confirmingSeize ? (
+                    <div className="flex flex-wrap items-center gap-1">
+                        <span className="mr-1 text-[13px] text-muted">Seize {user.username}? This takes all their listings down and can't be undone.</span>
+                        <ActionButton tone="danger" busy={seizing} onClick={seize}>
+                            Seize
+                        </ActionButton>
+                        <ActionButton disabled={seizing} onClick={() => setConfirmingSeize(false)}>
+                            Cancel
+                        </ActionButton>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-1">
+                        <ActionButton tone={user.isBlocked ? "primary" : "danger"} busy={busy} onClick={toggle}>
+                            {user.isBlocked ? "Unblock" : "Block"}
+                        </ActionButton>
+                        <ActionButton tone="danger" disabled={busy} onClick={() => setConfirmingSeize(true)}>
+                            Seize
+                        </ActionButton>
+                    </div>
+                ))}
         </li>
     );
 }

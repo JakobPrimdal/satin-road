@@ -181,6 +181,9 @@ export const getUsers = () => call(() => api.getUsers.userGetUsers()).then(list 
 export const setUserBlocked = (userId: string, blocked: boolean) =>
     call(() => api.setUserBlocked.userSetUserBlocked({ userId, blocked })).then(toAdminUser);
 
+export const raidVendor = (vendorId: string) =>
+    call(() => api.raidVendor.fbiRaidVendor({ vendorId }, { format: "json" }));
+
 
 export const getMe = () => call(() => api.getMe.authGetMe());
 export const register = (credentials: Credentials) =>
