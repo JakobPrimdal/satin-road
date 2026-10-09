@@ -3,7 +3,7 @@
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'satin-road-backend'
+app = 'satin-road-back'
 primary_region = 'arn'
 
 [build]
@@ -20,3 +20,7 @@ primary_region = 'arn'
   cpu_kind = 'shared'
   cpus = 1
   memory_mb = 512
+
+[mounts]
+source = "data"
+destination = "/app/data"

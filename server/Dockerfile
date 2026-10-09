@@ -21,7 +21,6 @@ RUN mkdir -p /app/data && chown -R app:app /app/data
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ASPNETCORE_HTTP_PORTS=4000
 
-USER app
 
 EXPOSE 4000
 

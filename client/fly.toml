@@ -1,11 +1,14 @@
-app = 'satin-road-frontend'
+app = 'satin-road-front'
 primary_region = 'arn'
 
 [build]
   dockerfile = "Dockerfile"
 
   [build.args]
-    BUN_PUBLIC_API_URL = "https://satin-road-backend.fly.dev"
+    BUN_PUBLIC_API_URL = "https://satin-road-back.fly.dev"
+
+[env]
+BUN_PUBLIC_API_URL = "https://satin-road-back.fly.dev"
 
 [http_service]
   internal_port = 3000
